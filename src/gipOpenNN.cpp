@@ -7,6 +7,8 @@
 
 #include "gipOpenNN.h"
 
+using namespace OpenNN;
+
 gipOpenNN::gipOpenNN() {
 
 
@@ -16,3 +18,6 @@ gipOpenNN::~gipOpenNN() {
 
 }
 
+void gipOpenNN::setDataset(std::string datasetFilepath, char delimiter, bool hasColumnNames) {
+	dataset = DataSet(datasetFilepath, delimiter, hasColumnNames);
+}
