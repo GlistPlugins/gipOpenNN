@@ -19,5 +19,5 @@ gipOpenNN::~gipOpenNN() {
 }
 
 void gipOpenNN::setDataset(std::string datasetFilepath, char delimiter, bool hasColumnNames) {
-	dataset = DataSet(datasetFilepath, delimiter, hasColumnNames);
+	dataset = DataSet(gGetFilesDir() + datasetFilepath, delimiter, hasColumnNames);
 }
