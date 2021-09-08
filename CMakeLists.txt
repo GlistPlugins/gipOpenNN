@@ -95,6 +95,7 @@ if(WIN32)
 elseif(LINUX)
 	list(APPEND PLUGIN_LINKLIBS
 				#Lib names
+				gomp
 	)
 elseif(APPLE)
 	list(APPEND PLUGIN_LINKLIBS
