@@ -16,11 +16,24 @@
 class gipOpenNN : public gBasePlugin{
 public:
 
-	typedef OpenNN::DataSet Dataset;
+	typedef Eigen::Index Index;
+	typedef OpenNN::DataSet DataSet;
 	typedef OpenNN::NeuralNetwork NeuralNetwork;
 	typedef OpenNN::TrainingStrategy TrainingStrategy;
 	typedef OpenNN::OptimizationAlgorithm OptimizationAlgorithm;
 	typedef OpenNN::TestingAnalysis TestingAnalysis;
+	typedef OpenNN::Descriptives Descriptives;
+	typedef OpenNN::ScalingLayer ScalingLayer;
+	typedef OpenNN::UnscalingLayer UnscalingLayer;
+	typedef OpenNN::PerceptronLayer PerceptronLayer;
+	typedef OpenNN::ProbabilisticLayer ProbabilisticLayer;
+	typedef OpenNN::AdaptiveMomentEstimation AdaptiveMomentEstimation;
+	typedef OpenNN::ModelSelection ModelSelection;
+	typedef OpenNN::GrowingNeurons GrowingNeurons;
+	typedef OpenNN::GeneticAlgorithm GeneticAlgorithm;
+	typedef OpenNN::LossIndex LossIndex;
+	typedef OpenNN::ConjugateGradient ConjugateGradient;
+	typedef OpenNN::QuasiNewtonMethod QuasiNewtonMethod;
 
 	template<typename Scalar_, int NumIndices_>
 	using Tensor = Eigen::Tensor<Scalar_, NumIndices_>;
@@ -31,17 +44,34 @@ public:
 
 	void setDataset(std::string datasetFilepath, char delimiter, bool hasColumnNames);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
+
+	void createTrainingStrategy();
 	void performTraining();
-	void calculateTests();
-	void saveResults(std::string neuralNetworkFilename, std::string expressionFileName);
+
+	void createTestingAnalysis();
+	void performBinaryClassificationTest();
+	void performConfusionTest();
+
+	void saveOutputs(const Tensor<float, 2>& inputs, std::string csvFilename);
+	void saveDataset(std::string xmlFilename);
+	void saveNeuralNetwork(std::string xmlFilename);
+	void saveTrainingStrategy(std::string xmlFilename);
+	void saveTestingAnalysis(std::string xmlFilename);
+	void saveExpression(std::string cppFilename);
+
+	gipOpenNN::DataSet* getDataset();
+	gipOpenNN::NeuralNetwork* getNeuralNetwork();
+	gipOpenNN::TrainingStrategy* getTrainingStrategy();
+	gipOpenNN::OptimizationAlgorithm::Results* getTrainingResults();
+	gipOpenNN::TestingAnalysis* getTestingAnalysis();
 
 private:
-	Dataset* dataset;
-	NeuralNetwork* neural_network;
-	TrainingStrategy* training_strategy;
-	OptimizationAlgorithm::Results training_results;
-	TestingAnalysis* testing_analysis;
-	Tensor<float, 1> binary_classification_tests;
+	DataSet* dataset;
+	NeuralNetwork* neuralnetwork;
+	TrainingStrategy* trainingstrategy;
+	OptimizationAlgorithm::Results trainingresults;
+	TestingAnalysis* testinganalysis;
+	Tensor<float, 1> binaryclassificationtests;
 	Tensor<Index, 2> confusion;
 };
 
