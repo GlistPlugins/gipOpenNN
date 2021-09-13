@@ -12,33 +12,82 @@ gipOpenNN::gipOpenNN() {
 }
 
 gipOpenNN::~gipOpenNN() {
-	delete testing_analysis;
-	delete training_strategy;
-	delete neural_network;
+	delete testinganalysis;
+	delete trainingstrategy;
+	delete neuralnetwork;
 	delete dataset;
 }
 
 void gipOpenNN::setDataset(std::string datasetFilepath, char delimiter, bool hasColumnNames) {
-	dataset = new Dataset(gGetFilesDir() + datasetFilepath, delimiter, hasColumnNames);
+	dataset = new DataSet(gGetFilesDir() + datasetFilepath, delimiter, hasColumnNames);
 }
 
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, const Tensor<Index, 1>& tensor) {
-	neural_network = new NeuralNetwork(projectType, tensor);
+	neuralnetwork = new NeuralNetwork(projectType, tensor);
+}
+
+void gipOpenNN::createTrainingStrategy() {
+	trainingstrategy = new TrainingStrategy(neuralnetwork, dataset);
 }
 
 void gipOpenNN::performTraining() {
-	training_strategy = new TrainingStrategy(neural_network, dataset);
-	training_results = training_strategy->perform_training();
+	trainingresults = trainingstrategy->perform_training();
 }
 
-void gipOpenNN::calculateTests() {
-	testing_analysis = new TestingAnalysis(neural_network, dataset);
-	binary_classification_tests = testing_analysis->calculate_binary_classification_tests();
-	confusion = testing_analysis->calculate_confusion();
+void gipOpenNN::createTestingAnalysis() {
+	testinganalysis = new TestingAnalysis(neuralnetwork, dataset);
 }
 
-void gipOpenNN::saveResults(std::string neuralNetworkFilename, std::string expressionFileName) {
-	neural_network->save(gGetFilesDir() + neuralNetworkFilename);
-	neural_network->save_expression_python(gGetFilesDir() + expressionFileName);
+void gipOpenNN::performBinaryClassificationTest() {
+	binaryclassificationtests = testinganalysis->calculate_binary_classification_tests();
+}
+
+void gipOpenNN::performConfusionTest() {
+	confusion = testinganalysis->calculate_confusion();
+}
+
+void gipOpenNN::saveOutputs(const gipOpenNN::Tensor<float, 2>& inputs, std::string csvFilename) {
+	neuralnetwork->save_outputs(inputs, gGetFilesDir() + csvFilename);
+}
+
+void gipOpenNN::saveDataset(std::string xmlFilename) {
+	dataset->save(gGetFilesDir() + xmlFilename);
+}
+
+void gipOpenNN::saveNeuralNetwork(std::string xmlFilename) {
+	neuralnetwork->save(gGetFilesDir() + xmlFilename);
+}
+
+void gipOpenNN::saveTrainingStrategy(std::string xmlFilename) {
+	trainingstrategy->save(gGetFilesDir() + xmlFilename);
+}
+
+void gipOpenNN::saveTestingAnalysis(std::string xmlFilename) {
+	testinganalysis->save(gGetFilesDir() + xmlFilename);
+}
+
+void gipOpenNN::saveExpression(std::string cppFilename) {
+	neuralnetwork->save_expression_c(gGetFilesDir() + cppFilename);
+}
+
+
+gipOpenNN::DataSet* gipOpenNN::getDataset() {
+	return dataset;
+}
+
+gipOpenNN::NeuralNetwork* gipOpenNN::getNeuralNetwork() {
+	return neuralnetwork;
+}
+
+gipOpenNN::TrainingStrategy* gipOpenNN::getTrainingStrategy() {
+	return trainingstrategy;
+}
+
+gipOpenNN::OptimizationAlgorithm::Results* gipOpenNN::getTrainingResults() {
+	return &trainingresults;
+}
+
+gipOpenNN::TestingAnalysis* gipOpenNN::getTestingAnalysis() {
+	return testinganalysis;
 }
 

@@ -1,0 +1,45 @@
+<NeuralNetwork>
+   <Inputs>
+      <InputsNumber>2</InputsNumber>
+      <Input Index="1">x1</Input>
+      <Input Index="2">x2</Input>
+   </Inputs>
+   <Layers>
+      <LayersTypes>Scaling Perceptron Probabilistic</LayersTypes>
+      <ScalingLayer>
+         <ScalingNeuronsNumber>2</ScalingNeuronsNumber>
+         <ScalingNeuron Index="1">
+            <Minimum>0.186207</Minimum>
+            <Maximum>0.868056</Maximum>
+            <Mean>0.497146</Mean>
+            <StandardDeviation>0.190358</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+         <ScalingNeuron Index="2">
+            <Minimum>0.149351</Minimum>
+            <Maximum>0.875</Maximum>
+            <Mean>0.488018</Mean>
+            <StandardDeviation>0.198204</StandardDeviation>
+            <ScalingMethod>MinimumMaximum</ScalingMethod>
+         </ScalingNeuron>
+      </ScalingLayer>
+      <PerceptronLayer>
+         <LayerName>perceptron_layer_0</LayerName>
+         <InputsNumber>2</InputsNumber>
+         <NeuronsNumber>20</NeuronsNumber>
+         <ActivationFunction>HyperbolicTangent</ActivationFunction>
+         <Parameters>3.6891 -0.125923 0.871078 4.3955 -0.959286 -3.99974 -6.76886 -2.83186 1.03567 -2.57231 3.45756 1.8292 -0.617242 2.18308 -1.47203 0.288314 0.246858 0.268545 -2.89747 -0.752605 -11.9619 12.2985 -1.87483 3.31824 -5.4216 8.72181 -14.3588 6.92179 -18.2031 17.9216 -5.47989 10.1361 -22.2448 24.7599 -2.48821 4.45903 -2.77449 -2.09067 -5.35092 5.6447 7.29472 -13.1729 -2.91812 3.66183 -9.5316 9.10661 1.56153 -4.81144 -3.6242 11.6719 5.32357 -18.0345 -3.63503 5.37893 1.06609 -1.79392 5.57543 -8.27511 -7.26392 11.2998</Parameters>
+      </PerceptronLayer>
+      <ProbabilisticLayer>
+         <InputsNumber>20</InputsNumber>
+         <NeuronsNumber>1</NeuronsNumber>
+         <ActivationFunction>Logistic</ActivationFunction>
+         <Parameters>-2.11436 4.53255 -0.190176 0.889665 7.65002 19.819 -1.51278 32.2882 -5.39936 20.4438 12.333 -4.73238 -1.39688 8.54262 6.59443 1.14179 -4.91892 8.13032 -6.69023 -7.40605 5.22783</Parameters>
+         <DecisionThreshold>0.5</DecisionThreshold>
+      </ProbabilisticLayer>
+   </Layers>
+   <Outputs>
+      <OutputsNumber>1</OutputsNumber>
+      <Output Index="1">y</Output>
+   </Outputs>
+</NeuralNetwork>
