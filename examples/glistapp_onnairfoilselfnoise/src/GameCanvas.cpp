@@ -23,7 +23,7 @@ void GameCanvas::setup() {
 	srand(static_cast<unsigned>(time(nullptr)));
 
 	// Data set
-	ai.setDataset("airfoil_self_noise.csv", ';', true);
+	ai.loadDatasetFile("airfoil_self_noise.csv", ';', true);
 
     const gipOpenNN::Tensor<string, 1> inputs_names = ai.getDataset()->get_input_variables_names();
     const gipOpenNN::Tensor<string, 1> targets_names = ai.getDataset()->get_target_variables_names();

@@ -18,8 +18,12 @@ gipOpenNN::~gipOpenNN() {
 	delete dataset;
 }
 
-void gipOpenNN::setDataset(std::string datasetFilepath, char delimiter, bool hasColumnNames) {
-	dataset = new DataSet(gGetFilesDir() + datasetFilepath, delimiter, hasColumnNames);
+void gipOpenNN::loadDataset(std::string datasetPath, char delimiter, bool hasColumnNames) {
+	dataset = new DataSet(datasetPath, delimiter, hasColumnNames);
+}
+
+void gipOpenNN::loadDatasetFile(std::string datasetFilePath, char delimiter, bool hasColumnNames) {
+	loadDataset(gGetFilesDir() + datasetFilePath, delimiter, hasColumnNames);
 }
 
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, const Tensor<Index, 1>& tensor) {

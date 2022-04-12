@@ -23,7 +23,7 @@ void GameCanvas::setup() {
 	srand(static_cast<unsigned>(time(nullptr)));
 
 	// Data set
-	ai.setDataset("pima_indians_diabetes.csv", ';', true);
+	ai.loadDatasetFile("pima_indians_diabetes.csv", ';', true);
 	ai.getDataset()->split_samples_random();
 	const gipOpenNN::Index input_variables_number = ai.getDataset()->get_input_variables_number();
 	const gipOpenNN::Index target_variables_number = ai.getDataset()->get_target_variables_number();

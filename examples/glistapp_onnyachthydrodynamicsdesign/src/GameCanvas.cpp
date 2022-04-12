@@ -23,7 +23,7 @@ void GameCanvas::setup() {
 	srand(static_cast<unsigned>(time(nullptr)));
 
 	// Data set
-	ai.setDataset("yachtresistance.csv", ';', true);
+	ai.loadDatasetFile("yachtresistance.csv", ';', true);
 	const gipOpenNN::Tensor<string, 1> inputs_names = ai.getDataset()->get_input_variables_names();
 	const gipOpenNN::Tensor<string, 1> targets_names = ai.getDataset()->get_target_variables_names();
 	ai.getDataset()->split_samples_random();
