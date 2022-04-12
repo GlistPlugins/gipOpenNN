@@ -21,7 +21,7 @@ void GameCanvas::setup() {
 	logo.loadImage("glistengine_logo.png");
 
 	// Data set
-	ai.setDataset("vehicle_insurances.csv", ';', true);
+	ai.loadDatasetFile("vehicle_insurances.csv", ';', true);
 	gipOpenNN::DataSet* dataset = ai.getDataset();
 	const gipOpenNN::Tensor<string, 1> inputs_names = dataset->get_input_variables_names();
 	const gipOpenNN::Tensor<string, 1> targets_names = dataset->get_target_variables_names();

@@ -23,7 +23,7 @@ void GameCanvas::setup() {
 	srand(static_cast<unsigned>(time(nullptr)));
 
 	// Data set
-	ai.setDataset("breast_cancer.csv",';',true);
+	ai.loadDatasetFile("breast_cancer.csv",';',true);
 	ai.getDataset()->split_samples_random();
 
 	const gipOpenNN::Tensor<string, 1> inputs_names = ai.getDataset()->get_input_variables_names();

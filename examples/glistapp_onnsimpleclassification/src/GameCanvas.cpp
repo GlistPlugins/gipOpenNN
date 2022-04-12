@@ -21,7 +21,7 @@ void GameCanvas::setup() {
 	logo.loadImage("glistengine_logo.png");
 
 	// Data set
-	ai.setDataset("simple_pattern_recognition.csv", ';', true);
+	ai.loadDatasetFile("simple_pattern_recognition.csv", ';', true);
 	gipOpenNN::DataSet* dataset = ai.getDataset();
     dataset->split_samples_random();
 
