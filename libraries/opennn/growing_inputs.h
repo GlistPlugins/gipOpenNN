@@ -25,7 +25,7 @@
 #include "inputs_selection.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
@@ -44,29 +44,6 @@ public:
 
     explicit GrowingInputs(TrainingStrategy*);
 
-    // Destructor
-
-    virtual ~GrowingInputs();
-
-    // Structures
-
-    /// This structure contains the training results for the growing inputs method.
-
-    struct GrowingInputsResults : public InputsSelection::Results
-    {
-        /// Default constructor.
-
-        explicit GrowingInputsResults() : InputsSelection::Results() {}
-
-        /// Destructor.
-
-        virtual ~GrowingInputsResults() {}
-
-
-        Tensor<bool, 1> selected_inputs;
-    };
-
-
     // Get methods
 
     const Index& get_maximum_inputs_number() const;
@@ -77,7 +54,7 @@ public:
 
     // Set methods
 
-    void set_default();
+    virtual void set_default() override;
 
     void set_maximum_inputs_number(const Index&);
 
@@ -85,15 +62,14 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    // Order selection methods
+    // Neurons selection methods
 
-    GrowingInputsResults* perform_inputs_selection();
+    InputsSelectionResults perform_inputs_selection() final;
 
     // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
 
-    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
@@ -113,7 +89,7 @@ private:
 
     /// Maximum number of epochs at which the selection error increases.
 
-    Index maximum_selection_failures = 10;
+    Index maximum_selection_failures = 100;
 };
 
 }
@@ -121,7 +97,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

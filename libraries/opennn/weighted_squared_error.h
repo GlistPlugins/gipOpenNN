@@ -24,8 +24,7 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the weighted squared error term.
@@ -46,10 +45,6 @@ public:
 
    explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
 
-   // Destructor
-
-   virtual ~WeightedSquaredError(); 
-
    // Get methods
 
    type get_positives_weight() const;
@@ -68,67 +63,66 @@ public:
 
    void set_weights();
 
-   void set_normalization_coefficient();
+   void set_normalization_coefficient() override;
 
-   void set_data_set_pointer(DataSet* new_data_set_pointer);
+   void set_data_set_pointer(DataSet*) final;
 
-   // Error methods
+   type weighted_sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y) const;
 
-   type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>& ) const;
+   string get_error_type() const final;
 
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   string get_error_type_text() const final;
 
-   void calculate_error_terms(const DataSet::Batch&,
-                              const NeuralNetwork::ForwardPropagation&,
-                              SecondOrderLoss&) const;
+   // Back propagation
 
-   string get_error_type() const;
-   string get_error_type_text() const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const final;
 
-   // Gradient methods
+   void calculate_output_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const final;
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const;
+   // Back propagation LM
 
-   void calculate_Jacobian_gradient(const DataSet::Batch&,
-                                    LossIndex::SecondOrderLoss&) const;
+   void calculate_squared_errors_lm(const DataSetBatch&,
+                                    const NeuralNetworkForwardPropagation&,
+                                    LossIndexBackPropagationLM&) const final;
 
-   // Hessian method
+   void calculate_error_lm(const DataSetBatch&,
+                           const NeuralNetworkForwardPropagation&,
+                           LossIndexBackPropagationLM&) const final;
 
-   void calculate_hessian_approximation(const DataSet::Batch&,
-                                        LossIndex::SecondOrderLoss&) const;
+   void calculate_error_gradient_lm(const DataSetBatch&,
+                              LossIndexBackPropagationLM&) const final;
+
+   void calculate_error_hessian_lm(const DataSetBatch&,
+                                           LossIndexBackPropagationLM&) const final;
 
    // Serialization methods
 
-      
    void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;   
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 
    /// Weight for the positives for the calculation of the error.
 
-   type positives_weight;
+   type positives_weight = type(NAN);
 
    /// Weight for the negatives for the calculation of the error.
 
-   type negatives_weight;
+   type negatives_weight = type(NAN);
 
    /// Coefficient of normalization
 
    type normalization_coefficient;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/weighted_squared_error_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/weighted_squared_error_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/weighted_squared_error_mkl.h"
-#endif
 };
 
 }
@@ -137,7 +131,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -10,19 +10,6 @@
 
 UnitTesting::UnitTesting()
 {
-    tests_count = 0;
-    tests_passed_count = 0;
-    tests_failed_count = 0;
-
-    numerical_differentiation_tests = true;
-    random_tests_number = 0;
-}
-
-
-/// Destructor.
-
-UnitTesting::~UnitTesting()
-{
 }
 
 
@@ -55,12 +42,6 @@ Index UnitTesting::get_tests_failed_count() const
 Index UnitTesting::get_random_tests_number() const
 {
     return random_tests_number;
-}
-
-
-bool UnitTesting::get_numerical_differentiation_tests() const
-{
-    return numerical_differentiation_tests;
 }
 
 
@@ -99,12 +80,6 @@ void UnitTesting::set_tests_failed_count(const Index& new_tests_failed_count)
 }
 
 
-void UnitTesting::set_numerical_differentiation_tests(const bool& new_numerical_differentiation_tests)
-{
-    numerical_differentiation_tests = new_numerical_differentiation_tests;
-}
-
-
 /// Sets a new value for the number of iterations in loops of random tests.
 /// @param new_random_tests_number Number of random tests in each loop.
 
@@ -130,7 +105,7 @@ void UnitTesting::set_display(const bool& new_display)
 /// It appends to the information message an error message is the condition is not satisfied.
 /// @param condition Expression of the condition to be tested.
 /// @param error_message Error message to be appended to the information message,
-/// typically the file name and the line where the condition has been tested.
+/// typically the filename and the line where the condition has been tested.
 
 void UnitTesting::assert_true(const bool& condition, const string& error_message)
 {
@@ -156,7 +131,7 @@ void UnitTesting::assert_true(const bool& condition, const string& error_message
 /// It appends to the information message an error message is the condition is not satisfied.
 /// @param condition Expression of the condition to be tested.
 /// @param error_message Error message to be appended to the information message,
-/// typically the file name and the line where the condition has been tested.
+/// typically the filename and the line where the condition has been tested.
 
 void UnitTesting::assert_false(const bool& condition, const string& error_message)
 {
@@ -204,7 +179,7 @@ void UnitTesting::print_results()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

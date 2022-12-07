@@ -21,12 +21,22 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 #include "layer.h"
 
+#include "probabilistic_layer.h"
 #include "perceptron_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
+
+struct RecurrentLayerForwardPropagation;
+struct RecurrentLayerBackPropagation;
+
+
+#ifdef OPENNN_CUDA
+        #include "../../opennn-cuda/opennn-cuda/struct_recurrent_layer_cuda.h"
+#endif
 
 /// This class represents a layer of neurons.
 /// Layers of neurons will be used to construct multilayer neurons.
@@ -38,7 +48,9 @@ public:
 
     /// Enumeration of the available activation functions for the recurrent layer.
 
-    enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+    enum class ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent,
+                            Linear, RectifiedLinear, ExponentialLinear,
+                            ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
    // Constructors
 
@@ -46,16 +58,12 @@ public:
 
    explicit RecurrentLayer(const Index&, const Index&);
 
-   // Destructor
-   
-   virtual ~RecurrentLayer();
-
    // Get methods
 
    bool is_empty() const;
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Index get_inputs_number() const override;
+   Index get_neurons_number() const final;
 
    const Tensor<type, 1>& get_hidden_states() const;
 
@@ -63,7 +71,7 @@ public:
 
    Index get_timesteps() const;
 
-   Tensor<type, 2> get_biases() const;
+   Tensor<type, 1> get_biases() const;
    const Tensor<type, 2>& get_input_weights() const;
    const Tensor<type, 2>& get_recurrent_weights() const;
 
@@ -71,8 +79,8 @@ public:
    Index get_input_weights_number() const;
    Index get_recurrent_weights_number() const;
 
-   Index get_parameters_number() const;
-   Tensor<type, 1> get_parameters() const;
+   Index get_parameters_number() const final;
+   Tensor<type, 1> get_parameters() const final;
 
    Tensor<type, 2> get_biases(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_input_weights(const Tensor<type, 1>&) const;
@@ -98,21 +106,21 @@ public:
 
    // Architecture
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const Index&) final;
+   void set_neurons_number(const Index&) final;
    void set_input_shape(const Tensor<Index, 1>&);
 
    // Parameters
 
    void set_timesteps(const Index&);
 
-   void set_biases(const Tensor<type, 2>&);
+   void set_biases(const Tensor<type, 1>&);
 
    void set_input_weights(const Tensor<type, 2>&);
 
    void set_recurrent_weights(const Tensor<type, 2>&);
 
-   void set_parameters(const Tensor<type, 1>&, const Index& index=0);
+   void set_parameters(const Tensor<type, 1>&, const Index& = 0) final;
 
    // Activation functions
 
@@ -125,64 +133,88 @@ public:
 
    // Parameters initialization methods
 
-   void initialize_hidden_states(const type&);
+   void set_hidden_states_constant(const type&);
 
    void set_biases_constant(const type&);
 
-   void initialize_input_weights(const type&);
-   void initialize_recurrent_weights(const type&);
+   void set_input_weights_constant(const type&);
+   void set_recurrent_weights_constant(const type&);
    void initialize_input_weights_Glorot(const type&, const type&);
 
-   void set_parameters_constant(const type&);
+   void set_parameters_constant(const type&) final;
 
-   void set_parameters_random();
+   void set_parameters_random() final;
 
-   // neuron layer combinations_2d
+   // neuron layer combinations
 
-   void calculate_current_combinations(const Tensor<type, 1>& current_inputs,
-                               Tensor<type, 1>& current_combinations);
+   void calculate_combinations(const Tensor<type, 1>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 2>&,
+                               const Tensor<type, 1>&,
+                               Tensor<type, 1>&) const;
 
+   void calculate_activations(Tensor<type, 1>&,
+                              Tensor<type, 1>&) const;
 
-   void calculate_current_activations(const Tensor<type, 1>& current_combinations, Tensor<type, 1>& current_activations) const;
-
-   void calculate_current_activations_derivatives(const Tensor<type, 1>& current_combinations,
-                                          Tensor<type, 1>& current_activations,
-                                          Tensor<type, 1>& current_activations_derivatives) const;
-
+   void calculate_activations_derivatives(type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&,
+                                          type*, const Tensor<Index, 1>&);
 
    // neuron layer outputs
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation);
+   void forward_propagate(type*, const Tensor<Index, 1>&, LayerForwardPropagation*) final;
 
-   void calculate_hidden_delta(Layer* next_layer_pointer,
-                               const Tensor<type, 2>&,
-                               ForwardPropagation& forward_propagation,
-                               const Tensor<type, 2>& next_layer_delta,
-                               Tensor<type, 2>& hidden_delta) const;
+   void forward_propagate(type*, const Tensor<Index, 1>&, Tensor<type, 1>&, LayerForwardPropagation*) final;
 
+   void calculate_hidden_delta(LayerForwardPropagation*,
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const final;
+
+   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
+                                          PerceptronLayerBackPropagation*,
+                                          RecurrentLayerBackPropagation*) const;
+
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
+                                             ProbabilisticLayerBackPropagation*,
+                                             RecurrentLayerBackPropagation*) const;
 
    // Gradient
 
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+   void insert_gradient(LayerBackPropagation*, const Index& , Tensor<type, 1>&) const final;
 
-   Tensor<type, 1> calculate_input_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
-   Tensor<type, 1> calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
-   Tensor<type, 1> calculate_biases_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+   void calculate_error_gradient(type*,
+                                 LayerForwardPropagation*,
+                                 LayerBackPropagation*) const final;
+
+   void calculate_biases_error_gradient(const Tensor<type, 2>&,
+                                        RecurrentLayerForwardPropagation*,
+                                        RecurrentLayerBackPropagation*) const;
+
+   void calculate_input_weights_error_gradient(const Tensor<type, 2>&,
+                                               RecurrentLayerForwardPropagation*,
+                                               RecurrentLayerBackPropagation*) const;
+
+   void calculate_recurrent_weights_error_gradient(const Tensor<type, 2>&,
+                                                   RecurrentLayerForwardPropagation*,
+                                                   RecurrentLayerBackPropagation*) const;
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+
    string write_activation_function_expression() const;
 
-   // Utilities
-
-   Tensor<type, 2> multiply_rows(const Tensor<type,2>&, const Tensor<type,1>&) const;
+   string write_expression_python() const final;
+   string write_combinations_python() const;
+   string write_activations_python() const;
 
    // Serialization methods
-   void from_XML(const tinyxml2::XMLDocument&);
-   void write_XML(tinyxml2::XMLPrinter&) const;
+
+   void from_XML(const tinyxml2::XMLDocument&) final;
+
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 protected:
 
@@ -191,17 +223,17 @@ protected:
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
 
-   Tensor<type, 2> biases;
+   Tensor<type, 1> biases;
 
    Tensor<type, 2> input_weights;
 
-   /// This matrix containing conection strengths from a recurrent layer inputs to its neurons.
+   /// This matrix contains conection strengths from a recurrent layer inputs to its neurons.
 
    Tensor<type, 2> recurrent_weights;
 
    /// Activation function variable.
 
-   ActivationFunction activation_function = HyperbolicTangent;
+   ActivationFunction activation_function = ActivationFunction::HyperbolicTangent;
 
    Tensor<type, 1> hidden_states;
 
@@ -210,17 +242,137 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/recurrent_layer_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/recurrent_layer_cuda.h"
+#else
+};
 #endif
 
+struct RecurrentLayerForwardPropagation : LayerForwardPropagation
+{
+    explicit RecurrentLayerForwardPropagation() : LayerForwardPropagation()
+    {
+    }
+
+    explicit RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer) : LayerForwardPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        batch_samples_number = new_batch_samples_number;
+
+        // Outputs
+
+        outputs_dimensions.resize(2);
+        outputs_dimensions.setValues({batch_samples_number, neurons_number});
+
+        //delete outputs_data;
+
+        outputs_data = (type*)malloc( static_cast<size_t>( batch_samples_number*neurons_number*sizeof(type) ));
+
+        // Rest of quantities
+
+        previous_activations.resize(neurons_number);
+
+        current_inputs.resize(inputs_number);
+        current_combinations.resize(neurons_number);
+        current_activations_derivatives.resize(neurons_number);
+
+        combinations.resize(batch_samples_number, neurons_number);
+
+        activations_derivatives.resize(batch_samples_number, neurons_number);
+    }
+
+    void print() const
+    {
+    }
+
+    Tensor<type, 1> previous_activations;
+
+    Tensor<type, 1> current_inputs;
+    Tensor<type, 1> current_combinations;
+    Tensor<type, 1> current_activations_derivatives;
+
+    Tensor<type, 2> combinations;
+    Tensor<type, 2> activations_derivatives;
 };
+
+
+struct RecurrentLayerBackPropagation : LayerBackPropagation
+{
+    explicit RecurrentLayerBackPropagation() : LayerBackPropagation()
+    {
+    }
+
+    explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
+
+        deltas_dimensions.resize(2);
+        deltas_dimensions.setValues({batch_samples_number, neurons_number});
+
+        //delete deltas_data;
+        deltas_data = (type*)malloc(static_cast<size_t>(batch_samples_number*neurons_number*sizeof(type)));
+
+        current_layer_deltas.resize(neurons_number);
+
+        biases_derivatives.resize(neurons_number);
+
+        input_weights_derivatives.resize(inputs_number * neurons_number);
+
+        recurrent_weights_derivatives.resize(neurons_number * neurons_number);
+
+        combinations_biases_derivatives.resize(neurons_number, neurons_number);
+        combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
+        combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
+    }
+
+
+    void print() const
+    {
+
+    }
+
+    Tensor<type, 1> current_layer_deltas;
+
+    Tensor<type, 1> biases_derivatives;
+
+    Tensor<type, 1> input_weights_derivatives;
+
+    Tensor<type, 1> recurrent_weights_derivatives;
+
+    Tensor<type, 2> combinations_biases_derivatives;
+    Tensor<type, 2> combinations_weights_derivatives;
+    Tensor<type, 2> combinations_recurrent_weights_derivatives;
+};
+
+
+
 
 }
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

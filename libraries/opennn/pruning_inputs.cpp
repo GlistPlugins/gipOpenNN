@@ -8,7 +8,9 @@
 
 #include "pruning_inputs.h"
 
-namespace OpenNN
+using namespace std;
+
+namespace opennn
 {
 
 /// Default constructor.
@@ -27,13 +29,6 @@ PruningInputs::PruningInputs(TrainingStrategy* new_training_strategy_pointer)
     : InputsSelection(new_training_strategy_pointer)
 {
     set_default();
-}
-
-
-/// Destructor.
-
-PruningInputs::~PruningInputs()
-{
 }
 
 
@@ -65,8 +60,6 @@ const Index& PruningInputs::get_maximum_selection_failures() const
 
 void PruningInputs::set_default()
 {
-    Index inputs_number;
-
     if(training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
     {
         maximum_selection_failures = 100;
@@ -74,22 +67,21 @@ void PruningInputs::set_default()
         maximum_inputs_number = 20;
     }
     else
-    {
-        inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        maximum_selection_failures = 100;//static_cast<Index>(max(3.,inputs_number/5.));
+    {       
+        maximum_selection_failures = 100;
 
-        maximum_inputs_number = inputs_number;
+        maximum_inputs_number = training_strategy_pointer->get_data_set_pointer()->get_input_columns_number();
     }
 
     minimum_inputs_number = 1;
 
-    minimum_correlation = 0.0;
+    minimum_correlation = type(0);
 
     trials_number = 3;
 
     maximum_epochs_number = 1000;
 
-    maximum_time = 3600.0;
+    maximum_time = type(3600.0);
 }
 
 
@@ -98,7 +90,7 @@ void PruningInputs::set_default()
 
 void PruningInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_inputs_number <= 0)
     {
@@ -108,7 +100,7 @@ void PruningInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_nu
                << "void set_minimum_inputs_number(const Index&) method.\n"
                << "Minimum inputs number must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -122,7 +114,7 @@ void PruningInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_nu
 
 void PruningInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_inputs_number <= 0)
     {
@@ -132,7 +124,7 @@ void PruningInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
                << "void set_maximum_inputs_number(const Index&) method.\n"
                << "Maximum inputs number must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
@@ -142,13 +134,13 @@ void PruningInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_nu
 
 
 /// Sets the maximum selection failures for the pruning inputs algorithm.
-/// @param new_maximum_loss_failures Maximum number of selection failures in the pruning inputs algorithm.
+/// @param new_maximum_selection_failures Maximum number of selection failures in the pruning inputs algorithm.
 
-void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
+void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
-    if(new_maximum_loss_failures <= 0)
+    if(new_maximum_selection_failures <= 0)
     {
         ostringstream buffer;
 
@@ -156,229 +148,189 @@ void PruningInputs::set_maximum_selection_failures(const Index& new_maximum_loss
                << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
 #endif
 
-    maximum_selection_failures = new_maximum_loss_failures;
+    maximum_selection_failures = new_maximum_selection_failures;
 }
 
 
 /// Perform the inputs selection with the pruning inputs method.
 
-PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
+InputsSelectionResults PruningInputs::perform_inputs_selection()
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
 #endif
 
-    PruningInputsResults* results = new PruningInputsResults();
+    InputsSelectionResults inputs_selection_results(maximum_epochs_number);
 
-    if(display)
-    {
-        cout << "Performing pruning inputs selection..." << endl;
-        cout << endl << "Calculating correlations..." << endl;
-    }
+    if(display) cout << "Performing pruning inputs selection..." << endl;
 
     // Loss index
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    type optimum_training_error = numeric_limits<type>::max();
-    type optimum_selection_error = numeric_limits<type>::max();
-    type previus_selection_error = numeric_limits<type>::max();
-
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const Tensor<Index, 1> original_input_columns_indices = data_set_pointer->get_input_columns_indices();
+    data_set_pointer->scrub_missing_values();
 
-//    const Tensor<Index, 1> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> inputs_variables_indices = data_set_pointer->get_input_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = data_set_pointer->get_target_columns_indices();
 
-    const Index used_columns_number = data_set_pointer->get_used_columns_number();
+    Tensor<string, 1> input_columns_names;
 
-//    const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
-    const Tensor<string, 1> columns_names = data_set_pointer->get_columns_names();
-//    const Tensor<string, 1> used_columns_names = data_set_pointer->get_input_variables_names();
+    Tensor<string,1> original_input_columns_names = data_set_pointer->get_input_columns_names();
 
-    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
+    const Tensor<type, 2> correlations = get_correlation_values(data_set_pointer->calculate_input_target_columns_correlations());
 
-    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+    const Tensor<type, 1> total_correlations = correlations.abs().sum(rows_sum);
 
-    const Tensor<type, 1> total_correlations = correlations.sum(rows_sum).abs();
+    Tensor<Index, 1> correlations_rank_descending = data_set_pointer->get_input_columns_indices();
 
-    Tensor<type, 1> correlations_ascending(total_correlations);
+    sort(correlations_rank_descending.data(),
+         correlations_rank_descending.data() + correlations_rank_descending.size(),
+         [&](Index i, Index j){return total_correlations[i] > total_correlations[j];});
 
-    Tensor<Index, 1> correlations_ascending_indices = original_input_columns_indices;
+    data_set_pointer->set_input_columns_unused();
 
-    sort( correlations_ascending_indices.data(),
-          correlations_ascending_indices.data()+original_input_columns_indices.size(),
-          [&](Index i,Index j){return total_correlations[i]>total_correlations[j];} );
+    for(Index i = 0; i < maximum_inputs_number; i++)
+    {
+        data_set_pointer->set_column_use(correlations_rank_descending[i], DataSet::VariableUse::Input);
+    }
 
-
-//    sort(correlations_ascending.data(), correlations_ascending.data() +  correlations_ascending.size(), less<type>());
-
-//    Tensor<Index, 1> correlations_ascending_indices(total_correlations.size());
-//    correlations_ascending_indices.setZero();
-
-//    for(Index i = 0; i < total_correlations.size(); i++)
-//    {
-//        for(Index j = 0; j < correlations_ascending.size(); j++)
-//        {
-//            if(correlations_ascending(i) == total_correlations(j))
-//            {
-//                correlations_ascending_indices(i) = j;
-//                correlations_ascending_indices(i) = original_input_columns_indices(j);
-//                continue;
-//            }
-//        }
-//    }
+    Index column_index = 0;
 
     // Neural network
 
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_neural_network_pointer();
 
-    const Tensor<Descriptives, 1> original_input_variables_descriptives = neural_network_pointer->get_scaling_layer_pointer()->get_descriptives();
+    // Training strategy
 
-    const Tensor<ScalingLayer::ScalingMethod, 1> original_scaling_methods = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_methods();
-
-    Tensor<Layer*, 1> trainable_layers = neural_network_pointer->get_trainable_layers_pointers();
-
-    Index trainable_layers_number = trainable_layers.size();
-
-    // Optimization algorithm
-
-    Tensor<Index, 1> current_columns_indices = inputs_variables_indices;
-
-    Tensor<Index, 1> optimal_columns_indices;
-
-    Tensor<type, 1> optimal_parameters;
+    training_strategy_pointer->set_display(false);
 
     Index selection_failures = 0;
 
-    time_t beginning_time, current_time;
-    type elapsed_time = 0;
+    TrainingResults training_results;
 
-    time(&beginning_time);
+    // First training
 
-    bool end_algorithm = false;
+    Index input_columns_number = data_set_pointer->get_input_columns_number();
+    Index input_variables_number = data_set_pointer->get_input_variables_number();
+
+    neural_network_pointer->set_inputs_number(input_variables_number);
+
+    neural_network_pointer->set_parameters_random();
+
+    training_results = training_strategy_pointer->perform_training();
+
+    type previus_selection_error = training_results.get_selection_error();
+    type previus_training_error = training_results.get_training_error();
+
+    inputs_selection_results.training_error_history(0) = previus_selection_error;
+    inputs_selection_results.selection_error_history(0) = previus_training_error;
 
     // Model selection
 
-    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
+    time_t beginning_time;
+    time_t current_time;
+    type elapsed_time = type(0);
 
-    for(Index iteration = 0; iteration < maximum_epochs_number; iteration++)
+    time(&beginning_time);
+
+    bool stop = false;
+
+    Index sorted_index = maximum_inputs_number - 1;
+
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
-        OptimizationAlgorithm::Results training_results;
+        sorted_index = maximum_inputs_number - 1 - epoch;
 
-        Index column_index;
-        string column_name;
+        data_set_pointer->set_column_use(correlations_rank_descending[sorted_index], DataSet::VariableUse::Unused);
 
-        if(iteration > 0)
+        input_columns_number = data_set_pointer->get_input_columns_number();
+        input_variables_number = data_set_pointer->get_input_variables_number();
+
+        neural_network_pointer->set_inputs_number(input_variables_number);
+
+        if(display)
         {
-            column_index = correlations_ascending_indices[iteration-1];
+            cout << endl;
+            cout << "Epoch: " << epoch << endl;
+            cout << "Input columns number: " << input_columns_number << endl;
+            cout << "Inputs: " << endl;
 
-            column_name = columns_names[column_index];
+            input_columns_names = data_set_pointer->get_input_columns_names();
 
-            data_set_pointer->set_column_use(column_name, DataSet::UnusedVariable);
-
-            current_columns_indices = delete_result(column_index, current_columns_indices);
-
-            const Index input_variables_number = data_set_pointer->get_input_variables_number();
-
-            data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).constant(input_variables_number));
-
-            neural_network_pointer->set_inputs_number(input_variables_number);
+            for(Index i = 0; i < input_columns_number; i++) cout << "   " << input_columns_names(i) << endl;
         }
 
-//        if(iteration == 0)
-//        {
-//            training_results = training_strategy_pointer->perform_training();
+        type minimum_training_error = numeric_limits<type>::max();
+        type minimum_selection_error = numeric_limits<type>::max();
 
-//            current_training_error = training_results.final_training_error;
-//            current_selection_error = training_results.final_selection_error;
-//            current_parameters = training_results.final_parameters;
-//        }
-//        else
-//        {
-
-        // Trial
-
-        type optimum_selection_error_trial = numeric_limits<type>::max();
-        type optimum_training_error_trial = numeric_limits<type>::max();
-        Tensor<type, 1> optimum_parameters_trial(neural_network_pointer->get_parameters_number());
-
-        for(Index trial = 0; trial < trials_number; trial ++)
+        for(Index trial = 0; trial < trials_number; trial++)
         {
             neural_network_pointer->set_parameters_random();
 
             training_results = training_strategy_pointer->perform_training();
 
-            type current_training_error_trial = training_results.final_training_error;
-            type current_selection_error_trial = training_results.final_selection_error;
-            Tensor<type, 1> current_parameters_trial = training_results.final_parameters;
-
-            if(current_selection_error_trial < optimum_selection_error_trial)
+            if(training_results.get_selection_error() < minimum_selection_error)
             {
-                optimum_parameters_trial = current_parameters_trial;
-                optimum_selection_error_trial = current_selection_error_trial;
-                optimum_training_error_trial = current_training_error_trial;
+                minimum_training_error = training_results.get_training_error();
+                minimum_selection_error = training_results.get_selection_error();
+
+                inputs_selection_results.training_error_history(column_index) = minimum_training_error;
+                inputs_selection_results.selection_error_history(column_index) = minimum_selection_error;
             }
 
-            //                current_training_error = training_results.final_training_error;
-            //                current_selection_error = training_results.final_selection_error;
-            //                current_parameters = training_results.final_parameters;
+            if(training_results.get_selection_error() < inputs_selection_results.optimum_selection_error)
+            {
+                // Neural network
+
+                inputs_selection_results.optimal_input_columns_indices = data_set_pointer->get_input_columns_indices();
+                inputs_selection_results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
+
+                inputs_selection_results.optimal_parameters = neural_network_pointer->get_parameters();
+
+                // Loss index
+
+                inputs_selection_results.optimum_training_error = training_results.get_training_error();
+                inputs_selection_results.optimum_selection_error = training_results.get_selection_error();
+            }
 
             if(display)
             {
-                cout << endl << "Trial number: " << iteration << endl;
-                cout << "Training error: " << current_training_error_trial << endl;
-                cout << "Selection error: " << current_selection_error_trial << endl;
-                cout << "Stopping condition: " << training_results.write_stopping_condition() << endl << endl;
+                cout << "Trial number: " << trial+1 << endl;
+                cout << "   Training error: " << training_results.get_training_error() << endl;
+                cout << "   Selection error: " << training_results.get_selection_error() << endl;
             }
         }
 
-//        }
-
-//        if(display)
-//        {
-//            cout << endl << "Trial number: " << iteration << endl;
-//            cout << "Training error: " << current_training_error << endl;
-//            cout << "Selection error: " << current_selection_error << endl;
-//            cout << "Stopping condition: " << training_results.write_stopping_condition() << endl << endl;
-//        }
-
-        if(iteration == 0
-                ||(optimum_selection_error > optimum_selection_error_trial
-                   && abs(optimum_selection_error - optimum_selection_error_trial) > tolerance))
+        if(previus_training_error > minimum_training_error)
         {
-            optimal_columns_indices = current_columns_indices;
-            optimal_parameters = optimum_parameters_trial;
-            optimum_selection_error = optimum_selection_error_trial;
-            optimum_training_error = optimum_training_error_trial;
-        }
-        else if (previus_selection_error < optimum_selection_error_trial)
-        {
+            cout << "Selection failure" << endl;
             selection_failures++;
+
+            data_set_pointer->set_column_use(correlations_rank_descending[sorted_index], DataSet::VariableUse::Input);
         }
-
-        previus_selection_error = optimum_selection_error_trial;
-
-        if(reserve_training_error_data)
+        else
         {
-            results->training_error_data = insert_result(optimum_training_error_trial, results->training_error_data);
+            previus_training_error = minimum_training_error;
+            previus_selection_error = minimum_selection_error;
+
+            inputs_selection_results.training_error_history(column_index) = minimum_training_error;
+            inputs_selection_results.selection_error_history(column_index) = minimum_selection_error;
+
+            column_index++;
         }
 
-        if(reserve_selection_error_data)
-        {
-            results->selection_error_data = insert_result(optimum_selection_error_trial, results->selection_error_data);
-        }
+        sorted_index--;
 
         time(&current_time);
 
@@ -388,171 +340,106 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
         if(elapsed_time >= maximum_time)
         {
-            end_algorithm = true;
+            stop = true;
 
-            if(display) cout << "Maximum time reached." << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum time reached: " << write_time(elapsed_time) << endl;
 
-            results->stopping_condition = InputsSelection::MaximumTime;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
         }
-        else if(optimum_selection_error_trial <= selection_error_goal)
+        else if(inputs_selection_results.optimum_selection_error <= selection_error_goal)
         {
-            end_algorithm = true;
+            stop = true;
 
-            if(display) cout << "Selection loss reached." << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Selection loss reached: " << inputs_selection_results.optimum_selection_error << endl;
 
-            results->stopping_condition = InputsSelection::SelectionErrorGoal;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::SelectionErrorGoal;
         }
-        else if(iteration >= maximum_epochs_number)
+        else if(epoch >= maximum_epochs_number)
         {
-            end_algorithm = true;
+            stop = true;
 
-            if(display) cout << "Maximum number of epochs reached." << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
-            results->stopping_condition = InputsSelection::MaximumEpochs;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumEpochs;
         }
         else if(selection_failures >= maximum_selection_failures)
         {
-            end_algorithm = true;
+            stop = true;
 
-            if(display) cout << "Maximum selection failures("<<selection_failures<<") reached." << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum selection failures reached: " << selection_failures << endl;
 
-            results->stopping_condition = InputsSelection::MaximumSelectionFailures;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumSelectionFailures;
         }
-        else if(current_columns_indices.size() <= minimum_inputs_number)
+        else if(input_columns_number <= minimum_inputs_number || input_columns_number == 1 )
         {
-            //¿?
-            end_algorithm = true;
+            stop = true;
 
-            if(display) cout << "Minimum inputs("<< minimum_inputs_number <<") reached." << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Minimum inputs reached: " << minimum_inputs_number << endl;
 
-            results->stopping_condition = InputsSelection::MaximumInputs;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MinimumInputs;
         }
-        else if(current_columns_indices.size() == 1)
+        else if( sorted_index < 0)
         {
-            end_algorithm = true;
+            stop = true;
 
-            if(display) cout << "Algorithm finished" << endl;
+            if(display) cout << "All inputs have been tried." << endl;
 
-            results->stopping_condition = InputsSelection::AlgorithmFinished;
+            inputs_selection_results.stopping_condition = InputsSelection::StoppingCondition::MinimumInputs;
         }
 
-        if(display)
-        {
-            cout << "Iteration: " << iteration << endl;
-
-            if(end_algorithm == false && iteration != 0) cout << "Pruning input: " << data_set_pointer->get_variable_name(column_index) << endl;
-
-            cout << "Current inputs: " << endl <<  data_set_pointer->get_input_variables_names().cast<string>() << endl << endl;
-            cout << "Number of inputs: " << current_columns_indices.size() << endl;
-            cout << "Training error: " << optimum_training_error_trial << endl;
-            cout << "Selection error: " << optimum_selection_error_trial << endl;
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-
-            cout << endl;
-        }
-
-        if(end_algorithm == true)
+        if(stop)
         {
             // Save results
 
-            results->optimal_inputs_indices = optimal_columns_indices;
-            results->final_selection_error = optimum_selection_error;
-            results->final_training_error = optimum_training_error;
-            results->iterations_number = iteration + 1;
-            results->elapsed_time = write_elapsed_time(elapsed_time);
-            results->minimal_parameters = optimal_parameters;
+            inputs_selection_results.elapsed_time = write_time(elapsed_time);
+
+            inputs_selection_results.resize_history(epoch+1);
 
             break;
         }
     }
 
-    // Set Data set stuff
+    int new_history_size = inputs_selection_results.selection_error_history.size() - count( inputs_selection_results.selection_error_history.data(),
+                inputs_selection_results.selection_error_history.data() + inputs_selection_results.selection_error_history.size(),
+                -1);
 
-    data_set_pointer->set_input_columns_unused();
+    inputs_selection_results.resize_history(new_history_size);
 
-    const Index optimal_inputs_number = optimal_columns_indices.size();
+    // Set data set stuff
 
-    for(Index i = 0; i < optimal_inputs_number; i++)
-    {
-        const Index optimal_input_index = optimal_columns_indices[i];
+    data_set_pointer->set_input_target_columns(inputs_selection_results.optimal_input_columns_indices, target_columns_indices);
 
-        data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
-    }
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
-    const Index optimal_input_variables_number = data_set_pointer->get_input_variables_names().size();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->calculate_input_variables_descriptives();
 
-    data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1> (1).constant(optimal_input_variables_number));
+    set_maximum_inputs_number(data_set_pointer->get_input_columns_number());
 
-    // Set Neural network stuff
+    // Set neural network stuff
 
-    neural_network_pointer->set_inputs_number(optimal_input_variables_number);
-
-    neural_network_pointer->set_parameters(optimal_parameters);
+    neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
-    Tensor<Descriptives, 1> new_input_descriptives(optimal_input_variables_number);
-    Tensor<ScalingLayer::ScalingMethod, 1> new_scaling_methods(optimal_input_variables_number);
+    if(neural_network_pointer->has_scaling_layer())
+        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
-    Index descriptive_index = 0;
-    Index unused = 0;
+    neural_network_pointer->set_parameters(inputs_selection_results.optimal_parameters);
 
-    for(Index i = 0; i < original_input_columns_indices.size(); i++)
-    {
-        const Index current_column_index = original_input_columns_indices(i);
+    if(display) inputs_selection_results.print();
 
-        if(data_set_pointer->get_column_use(current_column_index) == DataSet::Input)
-        {
-            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical)
-            {
-                new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
-                new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
-                descriptive_index++;
-            }
-            else
-            {
-                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++)
-                {
-                    new_input_descriptives(descriptive_index) = original_input_variables_descriptives(descriptive_index + unused);
-                    new_scaling_methods(descriptive_index) = original_scaling_methods(descriptive_index + unused);
-                    descriptive_index++;
-                }
-            }
-        }
-        else if(data_set_pointer->get_column_use(current_column_index) == DataSet::UnusedVariable)
-        {
-            if(data_set_pointer->get_column_type(current_column_index) != DataSet::ColumnType::Categorical) unused ++;
-            else
-            {
-                for(Index j = 0; j < data_set_pointer->get_columns()[current_column_index].get_categories_number(); j++) unused ++;
-            }
-        }
-    }
-    neural_network_pointer->get_scaling_layer_pointer()->set_descriptives(new_input_descriptives);
-    neural_network_pointer->get_scaling_layer_pointer()->set_scaling_methods(new_scaling_methods);
-
-    if(display)
-    {
-        cout << "Optimal inputs: " << endl << data_set_pointer->get_input_variables_names().cast<string>() << endl << endl;
-        cout << "Optimal number of inputs: " << optimal_input_variables_number << endl;
-        cout << "Optimum training error: " << optimum_training_error << endl;
-        cout << "Optimum selection error: " << optimum_selection_error << endl;
-        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-    }
-
-    return results;
+    return inputs_selection_results;
 }
 
 
-/// Writes as matrix of strings the most representative atributes.
+/// This method writes a matrix of strings the most representative atributes.
 
 Tensor<string, 2> PruningInputs::to_string_matrix() const
 {
-
     ostringstream buffer;
 
-    Tensor<string, 1> labels(11);
-    Tensor<string, 1> values(11);
+    Tensor<string, 1> labels(8);
+    Tensor<string, 1> values(8);
 
     // Trials number
 
@@ -563,111 +450,68 @@ Tensor<string, 2> PruningInputs::to_string_matrix() const
 
     values(0) = buffer.str();
 
-    // Tolerance
-
-    labels(1) = "Tolerance";
-
-    buffer.str("");
-    buffer << tolerance;
-
-    values(1) = buffer.str();
-
     // Selection loss goal
 
-    labels(2) = "Selection loss goal";
+    labels(1) = "Selection loss goal";
 
     buffer.str("");
     buffer << selection_error_goal;
 
-    values(2) = buffer.str();
+    values(1) = buffer.str();
 
     // Maximum selection failures
 
-    labels(3) = "Maximum selection failures";
+    labels(2) = "Maximum selection failures";
 
     buffer.str("");
     buffer << maximum_selection_failures;
 
-    values(3) = buffer.str();
+    values(2) = buffer.str();
 
     // Minimum inputs number
 
-    labels(4) = "Minimum inputs number";
+    labels(3) = "Minimum inputs number";
 
     buffer.str("");
     buffer << minimum_inputs_number;
 
-    values(4) = buffer.str();
+    values(3) = buffer.str();
 
     // Minimum correlation
 
-    labels(5) = "Minimum correlation";
+    labels(4) = "Minimum correlation";
 
     buffer.str("");
     buffer << minimum_correlation;
 
-    values(5) = buffer.str();
+    values(4) = buffer.str();
 
     // Maximum correlation
 
-    labels(6) = "Maximum correlation";
+    labels(5) = "Maximum correlation";
 
     buffer.str("");
     buffer << maximum_correlation;
 
-    values(6) = buffer.str();
+    values(5) = buffer.str();
 
     // Maximum iterations number
 
-    labels(7) = "Maximum iterations number";
+    labels(6) = "Maximum iterations number";
 
     buffer.str("");
     buffer << maximum_epochs_number;
 
-    values(7) = buffer.str();
+    values(6) = buffer.str();
 
     // Maximum time
 
-    labels(8) = "Maximum time";
+    labels(7) = "Maximum time";
 
     buffer.str("");
     buffer << maximum_time;
 
-    values(8) = buffer.str();
-
-    // Plot training loss history
-
-    labels(9) = "Plot training loss history";
-
-    buffer.str("");
-
-    if(reserve_training_error_data)
-    {
-        buffer << "true";
-    }
-    else
-    {
-        buffer << "false";
-    }
-
-    values(9) = buffer.str();
-
-    // Plot selection error history
-
-    labels(10) = "Plot selection error hitory";
-
-    buffer.str("");
-
-    if(reserve_selection_error_data)
-    {
-        buffer << "true";
-    }
-    else
-    {
-        buffer << "false";
-    }
-
-    values(10) = buffer.str();
+    values(7) = buffer.str();
 
     const Index rows_number = labels.size();
     const Index columns_number = 2;
@@ -681,7 +525,7 @@ Tensor<string, 2> PruningInputs::to_string_matrix() const
 }
 
 
-/// Serializes the pruning inputs object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the pruning inputs object into an XML document of the TinyXML library without keeping the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -696,17 +540,6 @@ void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << trials_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Tolerance
-
-    file_stream.OpenElement("Tolerance");
-
-    buffer.str("");
-    buffer << tolerance;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -800,33 +633,9 @@ void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve loss data
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_error_data;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error data
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_error_data;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     file_stream.CloseElement();
 }
 
-
-// void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this pruning inputs object.
 /// @param document TinyXML document containing the member data.
@@ -843,26 +652,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "PruningInputs element is nullptr.\n";
 
-        throw logic_error(buffer.str());
-    }
-
-    // Regression
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Approximation");
-
-        if(element)
-        {
-            const string new_approximation = element->GetText();
-
-            try
-            {
-                set_approximation(new_approximation != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
+        throw invalid_argument(buffer.str());
     }
 
     // Trials number
@@ -877,64 +667,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_trials_number(new_trials_number);
             }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve loss data
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_training_error_data = element->GetText();
-
-            try
-            {
-                set_reserve_training_error_data(new_reserve_training_error_data != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error data
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_selection_error_data = element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve minimal parameters
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveMinimalParameters");
-
-        if(element)
-        {
-            const string new_reserve_minimal_parameters = element->GetText();
-
-            try
-            {
-                set_reserve_minimal_parameters(new_reserve_minimal_parameters != "0");
-            }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -953,7 +686,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_display(new_display != "0");
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -972,7 +705,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_selection_error_goal(new_selection_error_goal);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -985,13 +718,13 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
+            const Index new_maximum_epochs_number = static_cast<Index>(atoi(element->GetText()));
 
             try
             {
-                set_maximum_iterations_number(new_maximum_iterations_number);
+                set_maximum_epochs_number(new_maximum_epochs_number);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1010,7 +743,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_correlation(new_maximum_correlation);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1029,7 +762,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_correlation(new_minimum_correlation);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1048,26 +781,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_time(new_maximum_time);
             }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Tolerance
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Tolerance");
-
-        if(element)
-        {
-            const type new_tolerance = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_tolerance(new_tolerance);
-            }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1086,7 +800,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_minimum_inputs_number(new_minimum_inputs_number);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1105,7 +819,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_inputs_number(new_maximum_inputs_number);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
@@ -1124,33 +838,32 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
             {
                 set_maximum_selection_failures(new_maximum_selection_failures);
             }
-            catch(const logic_error& e)
+            catch(const invalid_argument& e)
             {
                 cerr << e.what() << endl;
             }
         }
     }
-
 }
 
 
-
-/// Saves to a XML-type file the members of the pruning inputs object.
+/// Saves to an XML-type file the members of the pruning inputs object.
 /// @param file_name Name of pruning inputs XML-type file.
 
 void PruningInputs::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE * file = fopen(file_name.c_str(), "w");
 
-//    document->SaveFile(file_name.c_str());
-
-//    delete document;
+    if(file)
+    {
+        tinyxml2::XMLPrinter printer(file);
+        write_XML(printer);
+        fclose(file);
+    }
 }
 
 
-
-
-/// Loads a pruning inputs object from a XML-type file.
+/// Loads a pruning inputs object from an XML-type file.
 /// @param file_name Name of pruning inputs XML-type file.
 
 void PruningInputs::load(const string& file_name)
@@ -1167,7 +880,7 @@ void PruningInputs::load(const string& file_name)
                << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw logic_error(buffer.str());
+        throw invalid_argument(buffer.str());
     }
 
     from_XML(document);
@@ -1175,7 +888,7 @@ void PruningInputs::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
