@@ -28,13 +28,15 @@
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 
-namespace OpenNN
+namespace opennn
 {
+
+struct ConjugateGradientData;
 
 /// In the conjugate gradient algorithms a search is performed along conjugate directions,
 /// which produces generally faster convergence than a search along the steepest descent directions.
 
-/// This concrete class represents a conjugate gradient training algorithm, based on solving sparse systems.
+/// This concrete class represents a conjugate gradient optimization algorithm.
 ///
 /// \cite 1 \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 ///
@@ -45,51 +47,17 @@ class ConjugateGradient : public OptimizationAlgorithm
 
 public:
 
-    struct GGOptimizationData : public OptimizationData
-    {
-        /// Default constructor.
-
-        explicit GGOptimizationData();
-
-        explicit GGOptimizationData(ConjugateGradient*);
-
-        virtual ~GGOptimizationData();
-
-        void set(ConjugateGradient*);
-
-        void print() const;
-
-        ConjugateGradient* conjugate_gradient_pointer = nullptr;
-
-        Tensor<type, 1> parameters_increment;
-
-        Tensor<type, 1> old_gradient;
-
-        Tensor<type, 1> old_training_direction;
-
-        Index epoch = 0;
-
-        type learning_rate = 0;
-        type old_learning_rate = 0;
-
-        type parameters_increment_norm = 0;
-
-        Tensor<type, 0> training_slope;
-    };
-
    // Enumerations
 
    /// Enumeration of the available training operators for obtaining the training direction.
 
-   enum TrainingDirectionMethod{PR, FR};
+   enum class TrainingDirectionMethod{PR, FR};
 
    // DEFAULT CONSTRUCTOR
 
    explicit ConjugateGradient(); 
 
    explicit ConjugateGradient(LossIndex*);   
-
-   virtual ~ConjugateGradient();
 
    // Get methods
 
@@ -103,28 +71,21 @@ public:
 
    // Stopping criteria
 
-   const type& get_minimum_parameters_increment_norm() const;
+   
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
-   const Index& get_maximum_selection_error_increases() const;
-   const type& get_gradient_norm_goal() const;
+   const Index& get_maximum_selection_failures() const;
+
 
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
 
-   const bool& get_choose_best_selection() const;
-
-   // Reserve training history
-
-   const bool& get_reserve_training_error_history() const;
-   const bool& get_reserve_selection_error_history() const;
-
    // Set methods
 
-   void set_default();
+   void set_default() final;
 
-   void set_loss_index_pointer(LossIndex*);
+   void set_loss_index_pointer(LossIndex*) final;
 
    // Training operators
 
@@ -133,28 +94,19 @@ public:
 
    // Stopping criteria
 
-   void set_minimum_parameters_increment_norm(const type&);
+   
 
    void set_loss_goal(const type&);
    void set_minimum_loss_decrease(const type&);
-   void set_maximum_selection_error_increases(const Index&);
-   void set_gradient_norm_goal(const type&);
+   void set_maximum_selection_failures(const Index&);
+
 
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
 
-   void set_choose_best_selection(const bool&);
-
-   // Reserve training history
-
-   void set_reserve_training_error_history(const bool&);
-   void set_reserve_selection_error_history(const bool&);
-
-   void set_reserve_all_training_history(const bool&);
-
    // Utilities
 
-   void set_save_period(const Index&);
+   virtual void set_save_period(const Index&);
 
    // Training direction methods
 
@@ -165,29 +117,31 @@ public:
    void calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void calculate_gradient_descent_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
+
+   void calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&,
+                                                        const Tensor<type, 1>&,
+                                                        const Tensor<type, 1>&,
+                                                        Tensor<type, 1>&) const;
 
    // Training methods
 
-   Results perform_training();
+   TrainingResults perform_training() final;
 
-   void perform_training_void();
-
-   string write_optimization_algorithm_type() const;
+   string write_optimization_algorithm_type() const final;
 
    // Serialization methods
 
-   Tensor<string, 2> to_string_matrix() const;
+   Tensor<string, 2> to_string_matrix() const final;
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
-   void update_epoch(
-           const DataSet::Batch& batch,
-           NeuralNetwork::ForwardPropagation& forward_propagation,
-           LossIndex::BackPropagation& back_propagation,
-           GGOptimizationData& optimization_data);
+   void update_parameters(
+           const DataSetBatch&,
+           NeuralNetworkForwardPropagation&,
+           LossIndexBackPropagation&,
+           ConjugateGradientData&) const;
 
 private:
 
@@ -195,7 +149,7 @@ private:
 
    /// Applied method for calculating the conjugate gradient direction.
 
-   TrainingDirectionMethod training_direction_method = ConjugateGradient::FR;
+   TrainingDirectionMethod training_direction_method = ConjugateGradient::TrainingDirectionMethod::FR;
 
    /// Learning rate algorithm object for one-dimensional minimization. 
 
@@ -203,49 +157,55 @@ private:
 
    // Stopping criteria
 
-   /// Norm of the parameters increment vector at which training stops.
+   /// Minimum loss improvement between two successive iterations. It is a stopping criterion.
 
-   type minimum_parameters_increment_norm = 0;
+   type minimum_loss_decrease = type(0);
 
-   /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
+   /// Goal value for the loss. It is a stopping criterion.
 
-   type minimum_loss_decrease = 0;
-
-   /// Goal value for the loss. It is used as a stopping criterion.
-
-   type training_loss_goal = 0;
-
-   /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
-
-   type gradient_norm_goal = 0;
+   type training_loss_goal = type(0);
 
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_error_increases;
+   Index maximum_selection_failures;
 
-   /// Maximum number of epochs to perform_training. It is used as a stopping criterion.
+   /// Maximum number of epochs to perform_training. It is a stopping criterion.
 
    Index maximum_epochs_number;
 
-   /// Maximum training time. It is used as a stopping criterion.
+   /// Maximum training time. It is a stopping criterion.
 
    type maximum_time;
+};
 
-   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-   bool choose_best_selection = false;
+struct ConjugateGradientData : public OptimizationAlgorithmData
+{
+    /// Default constructor.
 
-   // TRAINING HISTORY
+    explicit ConjugateGradientData();
 
-   /// True if the training error history vector is to be reserved, false otherwise.
+    explicit ConjugateGradientData(ConjugateGradient*);
 
-   bool reserve_training_error_history;
+    void set(ConjugateGradient*);
 
-   /// True if the selection error history vector is to be reserved, false otherwise.
+    virtual void print() const;
 
-   bool reserve_selection_error_history;
+    ConjugateGradient* conjugate_gradient_pointer = nullptr;  
 
+    Tensor<type, 1> parameters_increment;
+
+    Tensor<type, 1> old_gradient;
+
+    Tensor<type, 1> old_training_direction;
+
+    Index epoch = 0;
+
+    type learning_rate = type(0);
+    type old_learning_rate = type(0);
+
+    Tensor<type, 0> training_slope;
 };
 
 }
@@ -254,7 +214,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -269,4 +229,3 @@ private:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

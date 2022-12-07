@@ -24,7 +24,7 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the normalized squared error term. 
@@ -45,10 +45,6 @@ public:
 
    explicit NormalizedSquaredError();   
 
-    // Destructor
-
-   virtual ~NormalizedSquaredError();
-
    // Get methods
 
     type get_normalization_coefficient() const;
@@ -56,72 +52,71 @@ public:
 
    // Set methods
 
-    void set_normalization_coefficient();
+    void set_normalization_coefficient() override;
     void set_normalization_coefficient(const type&);
+
+    void set_time_series_normalization_coefficient();
 
     void set_selection_normalization_coefficient();
     void set_selection_normalization_coefficient(const type&);
 
-    void set_default();
+    virtual void set_default();
 
-    void set_data_set_pointer(DataSet* new_data_set_pointer);
+    void set_data_set_pointer(DataSet* new_data_set_pointer) final;
 
    // Normalization coefficients 
 
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
-   // Error methods
+   type calculate_time_series_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
+   // Back propagation
      
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const final;
 
-   void calculate_error_terms(const DataSet::Batch&,
-                              const NeuralNetwork::ForwardPropagation&,
-                              SecondOrderLoss&) const;
+   void calculate_output_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const final;
 
-   // Gradient methods
+    // Back propagation LM
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const;
+   void calculate_error_lm(const DataSetBatch&,
+                           const NeuralNetworkForwardPropagation&,
+                           LossIndexBackPropagationLM&) const final;
 
+   void calculate_output_delta_lm(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagationLM&) const final;
 
-   void calculate_Jacobian_gradient(const DataSet::Batch& batch,
-                                       LossIndex::SecondOrderLoss& second_order_loss) const;
+   void calculate_error_gradient_lm(const DataSetBatch&,
+                              LossIndexBackPropagationLM&) const final;
 
-   // Hessian method
-
-   void calculate_hessian_approximation(const DataSet::Batch&,
-                                        LossIndex::SecondOrderLoss&) const;
-
+   void calculate_error_hessian_lm(const DataSetBatch&,
+                                        LossIndexBackPropagationLM&) const final;
 
    // Serialization methods
 
-   string get_error_type() const;
-   string get_error_type_text() const;
+   string get_error_type() const final;
+   string get_error_type_text() const final;
 
-   
-   void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const tinyxml2::XMLDocument&) const;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 
    /// Coefficient of normalization for the calculation of the training error.
 
-   type normalization_coefficient;
+   type normalization_coefficient = type(NAN);
 
-   type selection_normalization_coefficient;
+   type selection_normalization_coefficient = type(NAN);
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/normalized_squared_error_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/normalized_squared_error_cuda.h"
 #endif
 
-
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/normalized_squared_error_mkl.h"
-#endif
 };
 
 }
@@ -130,7 +125,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -145,4 +140,3 @@ private:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

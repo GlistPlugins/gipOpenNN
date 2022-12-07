@@ -24,12 +24,12 @@
 
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents a layer of bounding neurons. 
 
-/// A bounding layer is used to ensure that variables will never fall below or above given values. 
+/// A bounding layer ensures that the output variables never fall below or above given values.
 
 class BoundingLayer : public Layer
 {
@@ -42,15 +42,11 @@ public:
 
    explicit BoundingLayer(const Index&);
 
-   // Destructor
-   
-   virtual ~BoundingLayer();
-
    // Enumerations
 
-   /// Enumeration of available methods for bounding the output variables.
+   /// Enumeration of the available methods for bounding the output variables.
 
-   enum BoundingMethod{NoBounding, Bounding};
+   enum class BoundingMethod{NoBounding, Bounding};
 
    // Check methods
 
@@ -59,8 +55,8 @@ public:
    // Get methods
 
 
-   Index get_inputs_number() const;
-   Index get_neurons_number() const;
+   Index get_inputs_number() const final;
+   Index get_neurons_number() const final;
 
    const BoundingMethod& get_bounding_method() const;
 
@@ -79,8 +75,8 @@ public:
    void set(const tinyxml2::XMLDocument&);
    void set(const BoundingLayer&);
 
-   void set_inputs_number(const Index&);
-   void set_neurons_number(const Index&);
+   void set_inputs_number(const Index&) final;
+   void set_neurons_number(const Index&) final;
 
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
@@ -97,28 +93,28 @@ public:
 
    // Lower and upper bounds
 
-   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
 
-   string write_expression_c() const;
-   string write_expression_python() const;
+   string write_expression_c() const final;
+   string write_expression_python() const final;
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
-protected:
+private:
 
    // MEMBERS
 
    /// Method used to bound the values.
 
-   BoundingMethod bounding_method = Bounding;
+   BoundingMethod bounding_method = BoundingMethod::Bounding;
 
    /// Lower bounds of output variables
 
@@ -139,7 +135,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

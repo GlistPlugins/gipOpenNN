@@ -7,7 +7,8 @@
 //   artelnics@artelnics.com
 
 #include "opennn_strings.h"
-namespace OpenNN
+
+namespace opennn
 {
 
 /// Returns the number of strings delimited by separator.
@@ -16,18 +17,6 @@ namespace OpenNN
 
 Index count_tokens(string& str, const char& separator)
 {
-//    if(!(this->find(separator) != string::npos))
-//    {
-//        ostringstream buffer;
-//
-//        buffer << "OpenNN Exception:\n"
-//               << "string class.\n"
-//               << "inline Index count_tokens(const string&) const method.\n"
-//               << "Separator not found in string: \"" << separator << "\".\n";
-//
-//        throw logic_error(buffer.str());
-//    }
-
     trim(str);
 
     Index tokens_count = 0;
@@ -61,7 +50,21 @@ Index count_tokens(string& str, const char& separator)
 
 Index count_tokens(const string& s, const char& c)
 {
-    return static_cast<Index>(count(s.begin(), s.end(), c) + 1);
+    string str_copy = s;
+
+    Index tokens_number = count(s.begin(), s.end(), c);
+
+    if(s[0] == c)
+    {
+        tokens_number--;
+    }
+    if(s[s.size() - 1] == c)
+    {
+        tokens_number--;
+    }
+
+    return (tokens_number+1);
+
 }
 
 
@@ -71,7 +74,6 @@ Index count_tokens(const string& s, const char& c)
 
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
-//    const string new_string = get_trimmed(str);
     const Index tokens_number = count_tokens(str, separator);
 
     Tensor<string, 1> tokens(tokens_number);
@@ -83,34 +85,37 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
     // Find first "non-delimiter"
 
     Index index = 0;
-    Index old_pos;
+    Index old_pos = lastPos;
 
     string::size_type pos = str.find_first_of(separator, lastPos);
 
     while(string::npos != pos || string::npos != lastPos)
     {
-
-        if((lastPos-old_pos != 1) && index!= 0){
+        if((lastPos-old_pos != 1) && index!= 0)
+        {
             tokens[index] = "";
             index++;
             old_pos = old_pos+1;
             continue;
         }
-        else{
-        // Found a token, add it to the vector
-        tokens[index] = str.substr(lastPos, pos - lastPos);
+        else
+        {
+            // Found a token, add it to the vector
+
+            tokens[index] = str.substr(lastPos, pos - lastPos);
         }
 
         old_pos = pos;
 
         // Skip delimiters. Note the "not_of"
+
         lastPos = str.find_first_not_of(separator, pos);
 
         // Find next "non-delimiter"
+
         pos = str.find_first_of(separator, lastPos);
 
         index++;
-
     }
 
     return tokens;
@@ -135,8 +140,7 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 
     Index index = 0;
 
-    Index old_pos;
-
+    Index old_pos = last_position;
 
     while(string::npos != position || string::npos != last_position)
     {
@@ -171,6 +175,76 @@ void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& to
 }
 
 
+/// Returns the number of strings delimited by separator.
+/// If separator does not match anywhere in the string, this method returns 0.
+/// @param str String to be tokenized.
+
+
+Index count_tokens(const string& s, const string& sep)
+{
+    Index tokens_number = 0;
+
+    std::string::size_type pos = 0;
+
+    while ( s.find(sep, pos) != std::string::npos )
+    {
+        pos = s.find(sep, pos);
+        ++ tokens_number;
+        pos += sep.length();
+    }
+
+    if(s.find(sep,0) == 0)
+    {
+        tokens_number--;
+    }
+    if(pos == s.length())
+    {
+        tokens_number--;
+    }
+
+    return (tokens_number+1);
+}
+
+
+/// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
+/// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
+/// @param str String to be tokenized.
+
+Tensor<string, 1> get_tokens(const string& s, const string& sep)
+{
+    const Index tokens_number = count_tokens(s, sep);
+
+    Tensor<string,1> tokens(tokens_number);
+
+    string str = s;
+    size_t pos = 0;
+    size_t last_pos = 0;
+    Index i = 0;
+
+    while ((pos = str.find(sep,pos)) != string::npos)
+    {
+        if(pos == 0) // Skip first position
+        {
+            pos += sep.length();
+            last_pos = pos;
+            continue;
+        }
+
+        tokens(i) = str.substr(last_pos, pos - last_pos);
+
+        pos += sep.length();
+        last_pos = pos;
+        i++;
+    }
+
+    if(last_pos != s.length()) // Reading last element
+    {
+        tokens(i) = str.substr(last_pos, s.length() - last_pos);
+    }
+
+    return tokens;
+}
+
 /// Returns a new vector with the elements of this string vector casted to type.
 
 Tensor<type, 1> to_type_vector(const string& str, const char& separator)
@@ -189,9 +263,9 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
             buffer << tokens[i];
 
-            type_vector(i) = stof(buffer.str());
+            type_vector(i) = type(stof(buffer.str()));
         }
-        catch(const logic_error&)
+        catch(const invalid_argument&)
         {
             type_vector(i) = static_cast<type>(nan(""));
         }
@@ -201,32 +275,66 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 }
 
 
+
+Tensor<string, 1> get_unique_elements(const Tensor<string,1>& tokens)
+{
+    string result = " ";
+
+    for(Index i = 0; i < tokens.size(); i++)
+    {
+        if( !contains_substring(result, " " + tokens(i) + " ") )
+        {
+            result += tokens(i) + " ";
+        }
+    }
+
+    return get_tokens(result,' ');
+};
+
+
+
+Tensor<Index, 1> count_unique(const Tensor<string,1>& tokens)
+{
+    Tensor<string, 1> unique_elements = get_unique_elements(tokens);
+
+    const Index unique_size = unique_elements.size();
+
+    Tensor<Index, 1> unique_count(unique_size);
+
+    for(Index i = 0; i < unique_size; i++)
+    {
+        unique_count(i) = Index(count(tokens.data(), tokens.data() + tokens.size(), unique_elements(i)));
+    }
+
+    return unique_count;
+};
+
+
+
 /// Returns true if the string passed as argument represents a number, and false otherwise.
 /// @param str String to be checked.
 
 bool is_numeric_string(const string& str)
 {
-    std::string::size_type index;
+    string::size_type index;
 
-    std::istringstream iss(str.data());
+    istringstream iss(str.data());
 
-    type dTestSink;
+    float dTestSink;
 
     iss >> dTestSink;
 
     // was any input successfully consumed/converted?
 
-    if(!iss)
-    {
-        return false;
-    }
+    if(!iss) return false;
 
     // was all the input successfully consumed/converted?
+
     try
     {
         stod(str, &index);
 
-        if(index == str.size() || (str.find("%") != std::string::npos && index+1 == str.size()))
+        if(index == str.size() || (str.find("%") != string::npos && index+1 == str.size()))
         {
             return true;
         }
@@ -235,18 +343,14 @@ bool is_numeric_string(const string& str)
             return  false;
         }
     }
-    catch (exception)
+    catch(const exception&)
     {
         return false;
     }
-
-//    if(!std::isdigit(str[0])) return false;
-//    return !str.empty() && std::find_if(str.begin(),
-//        str.end(), [](unsigned char c) { return (!std::isdigit(c) && !std::isspace(c) && c != '-' && c != '+' && c != '.' && c != 'e' && c != 'E'); }) == str.end();
 }
 
 
-/// Returns true if given string vector is constant, false otherwise.
+/// Returns true if given string vector is constant and false otherwise.
 /// @param str vector to be checked.
 ///
 bool is_constant_string(const Tensor<string, 1>& str)
@@ -254,53 +358,56 @@ bool is_constant_string(const Tensor<string, 1>& str)
     const string str0 = str[0];
     string str1;
 
-    for (int i = 1; i < str.size(); i++)
+    for(int i = 1; i < str.size(); i++)
     {
         str1 = str[i];
-        if (str1.compare(str0) != 0)
+        if(str1.compare(str0) != 0)
             return false;
     }
     return true;
 }
 
-/// Returns true if given numeric vector is constant, false otherwise.
+/// Returns true if given numeric vector is constant and false otherwise.
 /// @param str vector to be checked.
 
 bool is_constant_numeric(const Tensor<type, 1>& str)
 {
     const type a0 = str[0];
 
-    for (int i = 1; i < str.size(); i++)
+    for(int i = 1; i < str.size(); i++)
     {
-        if (abs(str[i]-a0)>1e-3 || ::isnan(str[i]) || ::isnan(a0))
-            return false;
+        if(abs(str[i]-a0) > type(1e-3) || isnan(str[i]) || isnan(a0)) return false;
     }
+
     return true;
 }
 
-/// Returns true if given string is a date, false otherwise.
+
+/// Returns true if given string is a date and false otherwise.
 /// @param str String to be checked.
 
 bool is_date_time_string(const string& str)
 {
     if(is_numeric_string(str))return false;
 
-    const regex regular_expression("20[0-9][0-9]|19[0-9][0-9]+[-|/|.](0[1-9]|1[0-2])"
-                                   "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                                   "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                                   "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
-                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])"
-                                   "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.] (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                                   "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                                   "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
-                                   "|([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])"
-                                   "|([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                                   "|([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M"
-                                  );
+    const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
+    const string format_3 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
+    const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])";
+    const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])";
+    const string format_7 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_8 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
+    const string format_9 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
+    const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
+    const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
+    const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
 
-    if(regex_match(str,regular_expression))
+    const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13);
+
+    if(regex_match(str, regular_expression))
     {
         return true;
     }
@@ -308,6 +415,78 @@ bool is_date_time_string(const string& str)
     {
         return false;
     }
+}
+
+
+/// Return true if word is a email, and false otherwise.
+/// @param word Word to check.
+
+bool is_email(const string& word)
+{
+    // define a regular expression
+    const regex pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
+
+    // try to match the string with the regular expression
+    return regex_match(word, pattern);
+}
+
+
+/// Return true if word contains a number, and false otherwise.
+/// @param word Word to check.
+
+bool contains_number(const string& word)
+{
+    return(find_if(word.begin(), word.end(), ::isdigit) != word.end());
+}
+
+
+/// Returns true if a word starting with a given substring, and false otherwise.
+/// @param word Word to check.
+/// @param starting Substring to comparison given word.
+
+bool starts_with(const string& word, const string& starting)
+{
+    if(starting.length() > word.length() || starting.length() == 0)
+    {
+        return false;
+    }
+
+    return(word.substr(0,starting.length()) == starting);
+}
+
+
+/// Returns true if a word ending with a given substring, and false otherwise.
+/// @param word Word to check.
+/// @param ending Substring to comparison given word.
+
+bool ends_with(const string& word, const string& ending)
+{
+    if(ending.length() > word.length())
+    {
+        return false;
+    }
+
+    return(word.substr(word.length() - ending.length()) == ending);
+}
+
+
+/// Returns true if a word ending with a given substring Tensor, and false otherwise.
+/// @param word Word to check.
+/// @param ending Substring Tensor with possibles endings words.
+
+bool ends_with(const string& word, const Tensor<string,1>& endings)
+{
+    const Index endings_size = endings.size();
+
+    for(Index i = 0; i < endings_size; i++)
+    {
+        if(ends_with(word,endings[i]))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
@@ -326,38 +505,25 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
 
     smatch matchs;
 
-    const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-    const string format_3 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
-    const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-    const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])";
-    const string format_7 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_8 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-    const string format_9 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
+    const string format_1 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_2 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
+    const string format_3 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
+    const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3]|[0-9])+[:]([0-5][0-9])";
+    const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](200[0-9]|201[0-9]|202[0-9]|19[0-9][0-9])";
+    const string format_7 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_8 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
+    const string format_9 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
     const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
     const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
     const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
-
+    const string format_14 = "(201[0-9]|202[0-9]|200[0-9]|19[0-9][0-9])";
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  +"|" + format_13);
-
-    const regex regular("(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                        "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
-                        "|([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])"
-                        "|(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])");
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  + "|" + format_13 + "|" + format_14);
 
     regex_search(date, matchs, regular_expression);
-
 
     if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
     {
@@ -369,7 +535,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -380,10 +546,9 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = stoi(matchs[4].str()) - static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[5].str());
             time_structure.tm_sec = stoi(matchs[6].str());
-
         }
     }
-    else if (matchs[7] != "") // yyyy/mm/dd hh:mm
+    else if(matchs[7] != "") // yyyy/mm/dd hh:mm
     {
         if(stoi(matchs[7].str()) < 1970)
         {
@@ -393,7 +558,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -405,7 +570,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if (matchs[12] != "") // yyyy/mm/dd
+    else if(matchs[12] != "") // yyyy/mm/dd
     {
         if(stoi(matchs[12].str()) < 1970)
         {
@@ -415,7 +580,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -425,10 +590,9 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = 0;
             time_structure.tm_min = 0;
             time_structure.tm_sec = 0;
-
         }
     }
-    else if (matchs[15] != "") // dd/mm/yyyy hh:mm:ss
+    else if(matchs[15] != "") // dd/mm/yyyy hh:mm:ss
     {
         if(stoi(matchs[17].str()) < 1970)
         {
@@ -438,7 +602,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -450,7 +614,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = stoi(matchs[20].str());
         }
     }
-    else if (matchs[21] != "") // dd/mm/yyyy hh:mm
+    else if(matchs[21] != "") // dd/mm/yyyy hh:mm
     {
         if(stoi(matchs[23].str()) < 1970)
         {
@@ -460,7 +624,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -472,7 +636,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if (matchs[26] != "") // dd/mm/yyyy
+    else if(matchs[26] != "") // dd/mm/yyyy
     {
         if(stoi(matchs[28].str()) < 1970)
         {
@@ -482,7 +646,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -494,7 +658,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if (matchs[29] != "") // yyyy/mmm|mmmm/dd hh:mm:ss
+    else if(matchs[29] != "") // yyyy/mmm|mmmm/dd hh:mm:ss
     {
         if(stoi(matchs[29].str()) < 1970)
         {
@@ -504,7 +668,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -528,7 +692,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = stoi(matchs[34].str());
         }
     }
-    else if (matchs[35] != "") // yyyy/mmm|mmmm/dd hh:mm
+    else if(matchs[35] != "") // yyyy/mmm|mmmm/dd hh:mm
     {
         if(stoi(matchs[35].str()) < 1970)
         {
@@ -538,7 +702,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -571,7 +735,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -594,7 +758,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
-    else if (matchs[43] != "") // mmm dd, yyyy
+    else if(matchs[43] != "") // mmm dd, yyyy
     {
         if(stoi(matchs[45].str()) < 1970)
         {
@@ -604,7 +768,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -638,7 +802,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                    << "time_t date_to_timestamp(const string&) method.\n"
                    << "Cannot convert dates below 1970.\n";
 
-            throw logic_error(buffer.str());
+            throw invalid_argument(buffer.str());
         }
         else
         {
@@ -658,7 +822,6 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         time_structure.tm_hour = stoi(matchs[48].str());
         time_structure.tm_min = stoi(matchs[49].str());
         time_structure.tm_sec = stoi(matchs[50].str());
-
     }
     else if(matchs[51] != "") // mm/dd/yyyy hh:mm:ss [AP]M
     {
@@ -673,32 +836,42 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         else{
             time_structure.tm_hour = stoi(matchs[54].str());
         }
+    }
+    else if(matchs[57] != "") // yyyy
+    {
+        time_structure.tm_year = stoi(matchs[57].str())-1900;
+        time_structure.tm_mon = 0;
+        time_structure.tm_mday = 1;
+        time_structure.tm_hour = 0;
+        time_structure.tm_min = 0;
+        time_structure.tm_sec = 0;
 
+        return mktime(&time_structure);
     }
     else if(is_numeric_string(date)){
     }
     else
     {
         ostringstream buffer;
-
         buffer << "OpenNN Exception: DataSet Class.\n"
                << "time_t date_to_timestamp(const string&) method.\n"
                << "Date format (" << date << ") is not implemented.\n";
-
         throw logic_error(buffer.str());
     }
 
-    if(is_numeric_string(date)){
+    if(is_numeric_string(date))
+    {
         time_t time_t_date = stoi(date);
-        return(time_t_date);
+        return time_t_date;
     }
-    else{
-    return mktime(&time_structure);
+    else
+    {
+        return mktime(&time_structure);
     }
 }
 
 
-/// Returns true if the string contains the given substring, false otherwise.
+/// Returns true if the string contains the given substring and false otherwise.
 /// @param str String.
 /// @param sub_str Substring to search.
 
@@ -718,13 +891,15 @@ bool contains_substring(const string& str, const string& sub_str)
 
 void trim(string& str)
 {
-    //prefixing spaces
+    // Prefixing spaces
 
     str.erase(0, str.find_first_not_of(' '));
+    str.erase(0, str.find_first_not_of('\t'));
 
-    //surfixing spaces
+    // Surfixing spaces
 
     str.erase(str.find_last_not_of(' ') + 1);
+    str.erase(str.find_last_not_of('\t') + 1);
 }
 
 
@@ -786,7 +961,12 @@ bool has_numbers(const Tensor<string, 1>& v)
 {
     for(Index i = 0; i < v.size(); i++)
     {
-        if(is_numeric_string(v[i])) return true;
+//        if(is_numeric_string(v[i])) return true;
+        if(is_numeric_string(v[i]))
+        {
+            cout << "The number is: " << v[i] << endl;
+            return true;
+        }
     }
 
     return false;
@@ -848,6 +1028,21 @@ bool is_mixed(const Tensor<string, 1>& v)
 }
 
 
+/// Checks if a string is valid encoded in UTF-8 or not
+/// @param string String to be checked.
+
+void remove_non_printable_chars( std::string& wstr)
+{
+    // get the ctype facet for wchar_t (Unicode code points in pactice)
+    typedef std::ctype< wchar_t > ctype ;
+    const ctype& ct = std::use_facet<ctype>( std::locale() ) ;
+
+    // remove non printable Unicode characters
+    wstr.erase( std::remove_if( wstr.begin(), wstr.end(),
+                    [&ct]( wchar_t ch ) { return !ct.is( ctype::print, ch ) ; } ),
+                wstr.end() ) ;
+}
+
 /// Replaces a substring by another one in each element of this vector.
 /// @param find_what String to be replaced.
 /// @param replace_with String to be put instead.
@@ -858,7 +1053,7 @@ void replace_substring(Tensor<string, 1>& vector, const string& find_what, const
 
     for(Index i = 0; i < size; i++)
     {
-        Index position = 0;
+        size_t position = 0;
 
         while((position = vector(i).find(find_what, position)) != string::npos)
         {
@@ -872,7 +1067,7 @@ void replace_substring(Tensor<string, 1>& vector, const string& find_what, const
 
 void replace(string& source, const string& find_what, const string& replace_with)
 {
-    Index position = 0;
+    size_t position = 0;
 
     while((position = source.find(find_what, position)) != string::npos)
     {
@@ -881,10 +1076,24 @@ void replace(string& source, const string& find_what, const string& replace_with
         position += replace_with.length();
     }
 }
+
+
+bool isNotAlnum (char &c)
+{
+    return (c < ' ' || c > '~');
+}
+
+void remove_not_alnum(string &str)
+{
+        str.erase(std::remove_if(str.begin(), str.end(), isNotAlnum), str.end());
+}
+
+
+
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

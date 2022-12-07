@@ -21,10 +21,10 @@
 #include "data_set.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
-/// This class represents the cross entropy error term, used for predicting probabilities.
+/// This class represents the cross-entropy error term, used for predicting probabilities.
 
 ///
 /// This functional is used in classification problems.
@@ -40,55 +40,47 @@ public:
 
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
 
-   // Destructor
-
-   virtual ~CrossEntropyError();
-
    // Error methods
 
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const final;
 
-   void calculate_binary_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_binary_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const;
 
-   void calculate_multiple_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_multiple_error(const DataSetBatch& batch,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const;
 
    // Gradient methods
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const;
+   void calculate_output_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const final;
 
-   void calculate_binary_output_gradient(const DataSet::Batch& batch,
-                                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                         BackPropagation& back_propagation) const;
+   void calculate_binary_output_delta(const DataSetBatch&,
+                                      NeuralNetworkForwardPropagation&,
+                                      LossIndexBackPropagation&) const;
 
-   void calculate_multiple_output_gradient(const DataSet::Batch& batch,
-                                           const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                           BackPropagation& back_propagation) const;
+   void calculate_multiple_output_delta(const DataSetBatch&,
+                                        NeuralNetworkForwardPropagation&,
+                                        LossIndexBackPropagation&) const;
 
-   string get_error_type() const;
-   string get_error_type_text() const;
+   string get_error_type() const final;
+   string get_error_type_text() const final;
 
    // Serialization methods
-
       
-   void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/cross_entropy_error_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/cross_entropy_error_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/cross_entropy_error_mkl.h"
-#endif
 };
 
 }
@@ -97,7 +89,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

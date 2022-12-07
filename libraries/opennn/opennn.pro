@@ -6,7 +6,8 @@
 #   Artificial Intelligence Techniques SL (Artelnics)
 #   artelnics@artelnics.com
 
-QT = # Do not use qt
+QT = \ # Do not use qt
+    widgets
 
 TARGET = opennn
 #DESTDIR = "$$PWD/bin"
@@ -14,26 +15,34 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-CONFIG += c++11
+#CONFIG += c++17
 
 CONFIG(debug, debug|release) {
-    DEFINES += __OPENNN_DEBUG__
+    DEFINES += OPENNN_DEBUG
 }
 
-#DEFINES += __Cpp11__
+DEFINES += __Cpp17__
+
+
+#QMAKE_CXXFLAGS += -bigobj
 
 # OpenMP library
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
-LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
+#QMAKE_CXXFLAGS += -std=c++17 -fopenmp -pthread #-lgomp -openmp
+#QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
+#LIBS += -fopenmp -pthread #-lgomp
+}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++17
 QMAKE_LFLAGS += -fopenmp -lgomp
 LIBS += -fopenmp -pthread -lgomp
 }else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
 LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
+
+win32:!win32-g++{
+#QMAKE_CXXFLAGS+= -arch:AVX
+#QMAKE_CFLAGS+= -arch:AVX
+}
 
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
@@ -41,15 +50,19 @@ LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
 
 # Eigen library
 
-#INCLUDEPATH += ../eigen
+INCLUDEPATH += ../eigen
 
 HEADERS += \
+    codification.h \
     numerical_differentiation.h \
     config.h \
     opennn_strings.h \
     statistics.h \
+    scaling.h \
     correlations.h \
+    codification.h \
     tinyxml2.h \
+    filesystem.h \
     data_set.h \
     layer.h \
     scaling_layer.h \
@@ -61,7 +74,6 @@ HEADERS += \
     bounding_layer.h \
     long_short_term_memory_layer.h \
     recurrent_layer.h \
-    principal_components_layer.h \
     neural_network.h \
     loss_index.h \
     mean_squared_error.h \
@@ -88,18 +100,25 @@ HEADERS += \
     growing_neurons.h \
     inputs_selection.h \
     growing_inputs.h \
-    pruning_inputs.h \
     genetic_algorithm.h \
     testing_analysis.h \
     response_optimization.h \
+    tensor_utilities.h \
     unit_testing.h \
+    flatten_layer.h \
+    text_analytics.h \
+    region_based_object_detector.h \
+    json_to_xml.h \
     opennn.h
 
 SOURCES += \
     numerical_differentiation.cpp \
     opennn_strings.cpp \
+    tensor_utilities.cpp \
     statistics.cpp \
+    scaling.cpp \
     correlations.cpp \
+    codification.cpp \
     tinyxml2.cpp \
     data_set.cpp \
     layer.cpp \
@@ -112,7 +131,6 @@ SOURCES += \
     convolutional_layer.cpp \
     long_short_term_memory_layer.cpp \
     recurrent_layer.cpp \
-    principal_components_layer.cpp \
     neural_network.cpp \
     loss_index.cpp \
     mean_squared_error.cpp \
@@ -138,31 +156,11 @@ SOURCES += \
     growing_neurons.cpp \
     inputs_selection.cpp \
     growing_inputs.cpp \
-    pruning_inputs.cpp \
     genetic_algorithm.cpp \
     testing_analysis.cpp \
     response_optimization.cpp \
+    flatten_layer.cpp \
+    text_analytics.cpp \
+    region_based_object_detector.cpp \
+    json_to_xml.cpp \
     unit_testing.cpp
-
-#Add-ons available under Commercial Licenses
-
-#DEFINES += __OPENNN_CUDA__
-
-#contains(DEFINES, __OPENNN_CUDA__){
-#    include(../../Artelnics/opennn_cuda/cuda_config.pri)
-#    include(../../Artelnics/opennn_cuda/cuda_path.pri)
-#}
-
-
-#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../openblas/lib/ -llibopenblasd
-#else:unix: LIBS += -L$$PWD/../../openblas/lib/ -llibopenblas
-
-#INCLUDEPATH += $$PWD/../../openblas/include
-#DEPENDPATH += $$PWD/../../openblas/include
-
-#win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblas.a
-#else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblasd.a
-#else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/libopenblas.lib
-#else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../../openblas/lib/libopenblasd.lib
-#else:unix: PRE_TARGETDEPS += $$PWD/../../openblas/lib/liblibopenblas.a

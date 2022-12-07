@@ -8,7 +8,7 @@
 
 #include "principal_components_layer.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// Default constructor.

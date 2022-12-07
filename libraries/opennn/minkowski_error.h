@@ -23,7 +23,7 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class represents the Minkowski error term. 
@@ -44,39 +44,34 @@ public:
 
    explicit MinkowskiError(NeuralNetwork*, DataSet*);
 
-   // Destructor
-
-   virtual ~MinkowskiError();
-
    // Get methods
 
    type get_Minkowski_parameter() const;
 
    // Set methods
 
-   void set_default();
+   virtual void set_default();
 
    void set_Minkowski_parameter(const type&);
 
    // loss methods
 
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_error(const DataSetBatch& batch,
+                        const NeuralNetworkForwardPropagation& forward_propagation,
+                        LossIndexBackPropagation& back_propagation) const override;
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const;
+   void calculate_output_delta(const DataSetBatch&,
+                               NeuralNetworkForwardPropagation&,
+                               LossIndexBackPropagation&) const final;
 
    // Serialization methods
 
-   string get_error_type() const;
-   string get_error_type_text() const;
+   string get_error_type() const final;
+   string get_error_type_text() const final;
 
-      
-   void from_XML(const tinyxml2::XMLDocument&);   
+   virtual void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
 private:
 
@@ -85,12 +80,9 @@ private:
    type minkowski_parameter;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/minkowski_error_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/minkowski_error_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/minkowski_error_mkl.h"
-#endif
 };
 
 }
@@ -99,7 +91,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

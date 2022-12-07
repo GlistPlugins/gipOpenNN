@@ -33,11 +33,13 @@
 #include "optimization_algorithm.h"
 #include "config.h"
 
-namespace OpenNN
+namespace opennn
 {
 
-/// This concrete class represents the adaptive moment estimation(Adam) training algorithm,
-/// based on adaptive estimates of lower-order moments.
+struct AdaptiveMomentEstimationData;
+
+/// This concrete class represents the adaptive moment estimation(Adam) optimization algorithm.
+/// This algorithm is based on adaptive estimates of lower-order moments.
 
 ///
 /// For more information visit:
@@ -45,42 +47,12 @@ namespace OpenNN
 /// \cite 1 C. Barranquero "High performance optimization algorithms for neural networks."
 /// \ref https://www.opennn.net/files/high_performance_optimization_algorithms_for_neural_networks.pdf .
 ///
-/// \cite 2 D. P. Kingma and J. L. Ba, "ADAM: A Method for Stochastic Optimization." arXiv preprint arXiv:1412.6980v8 (2014).
+/// \cite 2 D. P. Kingma and J. L. Ba, "Adam: A Method for Stochastic Optimization." arXiv preprint arXiv:1412.6980v8 (2014).
 
 class AdaptiveMomentEstimation : public OptimizationAlgorithm
 {
 
 public:
-
-    struct OptimizationData
-    {
-        /// Default constructor.
-
-        explicit OptimizationData();
-
-        explicit OptimizationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer);
-
-        virtual ~OptimizationData();
-
-        void set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer);
-
-        void print() const;
-
-        AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
-
-        Index learning_rate_iteration = 0;
-
-        Tensor<type, 1> parameters;
-        Tensor<type, 1> minimal_selection_parameters;
-
-        Tensor<type, 1> gradient_exponential_decay;
-        Tensor<type, 1> square_gradient_exponential_decay;
-
-        Tensor<type, 1> aux;
-
-        Index iteration;
-    };
-
 
    // Constructors
 
@@ -88,7 +60,7 @@ public:
 
    explicit AdaptiveMomentEstimation(LossIndex*);   
 
-   virtual ~AdaptiveMomentEstimation();
+   //virtual ~AdaptiveMomentEstimation();
    
    // Training operators
 
@@ -101,20 +73,18 @@ public:
 
    const type& get_loss_goal() const;
    const type& get_maximum_time() const;
-   const bool& get_choose_best_selection() const;
-
-   // Reserve training history
-
-   const bool& get_reserve_training_error_history() const;
-   const bool& get_reserve_selection_error_history() const;
 
    // Set methods
 
-   void set_loss_index_pointer(LossIndex*);
-
-   void set_reserve_all_training_history(const bool&);
+   void set_loss_index_pointer(LossIndex*) final;
 
    void set_batch_samples_number(const Index& new_batch_samples_number);
+
+   void set_default() final;
+
+   // Get methods
+
+   Index get_batch_samples_number() const;
 
    // Training operators
 
@@ -131,35 +101,24 @@ public:
 
    void set_loss_goal(const type&);
    void set_maximum_time(const type&);
-   void set_choose_best_selection(const bool&);
-
-   // Reserve training history
-
-   void set_reserve_training_error_history(const bool&);
-   void set_reserve_selection_error_history(const bool&);
 
    // Training methods
 
-   Results perform_training();
-
-   /// Perform Neural Network training.
-
-   void perform_training_void();
+   TrainingResults perform_training() final;
 
    /// Return the algorithm optimum for your model.
 
-   string write_optimization_algorithm_type() const;
+   string write_optimization_algorithm_type() const final;
 
    // Serialization methods
 
-   Tensor<string, 2> to_string_matrix() const;
+   Tensor<string, 2> to_string_matrix() const final;
 
-   void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&) final;
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const final;
 
-   void update_iteration(const LossIndex::BackPropagation& back_propagation,
-                                 OptimizationData& optimization_data);
+   void update_parameters(LossIndexBackPropagation&, AdaptiveMomentEstimationData&) const;
 
 private:
 
@@ -171,7 +130,7 @@ private:
 
    /// Learning rate decay over each update.
 
-   type initial_decay = 0;
+   type initial_decay = type(0);
 
    /// Exponential decay over gradient estimates.
 
@@ -187,56 +146,53 @@ private:
 
     // Stopping criteria
 
-   /// Goal value for the loss. It is used as a stopping criterion.
+   /// Goal value for the loss. It a stopping criterion.
 
-   type training_loss_goal = 0;
+   type training_loss_goal = type(0);
 
-   /// gradient norm goal. It is used as a stopping criterion.
-
-   type gradient_norm_goal = 0;
-
-   /// Maximum epochs number
+   /// Maximum epochs number.
 
    Index maximum_epochs_number = 10000;
 
-   /// Maximum selection error allowed
+   /// Maximum number of times when selection error increases.
 
-   Index maximum_selection_error_increases = 1000;
+   Index maximum_selection_failures = numeric_limits<Index>::max();
 
-   /// Maximum training time. It is used as a stopping criterion.
+   /// Maximum training time. It is a stopping criterion.
 
-   type maximum_time = 3600;
-
-   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
-
-   bool choose_best_selection = false;
-
-   // TRAINING HISTORY
-
-   /// True if the error history vector is to be reserved, false otherwise.
-
-   bool reserve_training_error_history = true;
-
-   /// True if the selection error history vector is to be reserved, false otherwise.
-
-   bool reserve_selection_error_history = true;
+   type maximum_time = type(3600);
 
    /// Training and selection batch size.
 
-   Index batch_samples_number = 1000;
-
-   /// Hardware use.
-
-   string hardware_use = "Multi-core";
+   Index batch_samples_number = 10;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
+    #include "../../opennn-cuda/opennn-cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
-#endif
+};
 
+
+struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
+{
+    /// Default constructor.
+
+    explicit AdaptiveMomentEstimationData();
+
+    explicit AdaptiveMomentEstimationData(AdaptiveMomentEstimation*);
+
+    void set(AdaptiveMomentEstimation*);
+
+    virtual void print() const;
+
+    AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
+
+    Tensor<type, 1> gradient_exponential_decay;
+    Tensor<type, 1> square_gradient_exponential_decay;
+
+    Index iteration = 0;
+
+    Index learning_rate_iteration = 0;
 };
 
 }

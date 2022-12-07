@@ -29,7 +29,7 @@
 
 //Eigen includes
 
-namespace OpenNN
+namespace opennn
 {
 
 /// This class contains tools for testing neural networks in different learning tasks.
@@ -53,25 +53,29 @@ public:
 
    virtual ~TestingAnalysis();
 
-    /// Structure with the results from a linear regression analysis.
+    /// Structure with the results from a goodness-of-fit analysis.
 
-    struct LinearRegressionAnalysis
+    struct GoodnessOfFitAnalysis
     {
        /// Target data from data set and output data from neural network.
 
-       type correlation = 0;
-
-       type intercept = 0;
-
-       type slope = 0;
+       type determination = type(0);
 
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
+       /// @todo
+
        void save(const string&) const
        {
-        /// @todo
        }
+
+       void print() const
+       {
+           cout << "Goodness-of-fit analysis" << endl;
+           cout << "Determination: " << determination << endl;
+       }
+
     };
 
 
@@ -117,7 +121,7 @@ public:
 
     /// Structure with the binary classification rates
 
-    struct BinaryClassifcationRates
+    struct BinaryClassificationRates
     {
         /// Vector with the indices of the samples which are true positive.
 
@@ -195,22 +199,25 @@ public:
    type calculate_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
-   type calculate_Minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type = 1.5) const;
+   type calculate_Minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type = type(1.5)) const;
 
-   // Linear regression analysis methods
+   type calculate_determination_coefficient(const Tensor<type,1>&, const Tensor<type,1>&) const;
 
-   Tensor<RegressionResults, 1> linear_regression() const;
-   Tensor<RegressionResults, 1> linear_regression(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   // Goodness-of-fit analysis methods
+
+   Tensor<Correlation, 1> linear_correlation() const;
+   Tensor<Correlation, 1> linear_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void print_linear_regression_correlations() const;
-   Tensor<type, 1> get_linear_regression_correlations_std() const;
 
-   Tensor<LinearRegressionAnalysis, 1> perform_linear_regression_analysis() const;
-   void perform_linear_regression_analysis_void() const;
+   Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
+   void print_goodness_of_fit_analysis() const;
 
    // Binary classifcation methods
 
    Tensor<type, 1> calculate_binary_classification_tests() const;
+
+   void print_binary_classification_tests() const;
 
    type calculate_logloss() const;
 
@@ -230,18 +237,20 @@ public:
 
    type calculate_Wilcoxon_parameter(const type&, const type&) const;
 
-   Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
-   type calculate_area_under_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
+//   type calculate_area_under_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
    type calculate_area_under_curve(const Tensor<type, 2>&) const;
    type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
-   type calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
-   type calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+//   type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
+//   type calculate_optimal_threshold(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_optimal_threshold(const Tensor<type, 2>&) const;
 
    // Lift Chart
 
    Tensor<type, 2> perform_cumulative_gain_analysis() const;
-   Tensor<type, 2> calculate_cumulative_gain(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    Tensor<type, 2> calculate_negative_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&)const;
 
    Tensor<type, 2> perform_lift_chart_analysis() const;
@@ -262,7 +271,7 @@ public:
 
    // Binary classification rates
 
-   BinaryClassifcationRates calculate_binary_classification_rates() const;
+   BinaryClassificationRates calculate_binary_classification_rates() const;
 
    Tensor<Index, 1> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
    Tensor<Index, 1> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
@@ -271,7 +280,8 @@ public:
 
    // Multiple classification tests
 
-   Tensor<type, 1> calculate_multiple_classification_tests() const;
+   Tensor<type, 1> calculate_multiple_classification_precision() const;
+   Tensor<type, 2> calculate_multiple_classification_tests() const;
    void save_confusion(const string&) const;
    void save_multiple_classification_tests(const string&) const;
 
@@ -281,9 +291,9 @@ public:
 
    Tensor<Tensor<Index,1>, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
 
-   Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+   Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
 
-   Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
+   Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&) const;
 
    void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
@@ -293,9 +303,9 @@ public:
 
    void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
-   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
+   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&) const;
 
-   void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const string&);
+   void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const string&) const;
 
    void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
 
@@ -318,13 +328,10 @@ public:
    void save(const string&) const;
    void load(const string&);
 
-   bool contains(const Tensor<type, 1>&, const type&) const;
-   Tensor<type, 2> delete_row(const Tensor<type, 2>& , const Index&) const;
-
 
 private: 
 
-   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+   ThreadPool* thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to the neural network object to be tested. 
@@ -347,7 +354,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
