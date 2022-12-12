@@ -13,21 +13,17 @@ set(PREBUILT_DIR ${PLUGIN_DIR}/prebuilts)
 list(APPEND PLUGIN_SRCS
 			${PLUGIN_DIR}/src/gipOpenNN.cpp
 			${PLUGIN_DIR}/libraries/opennn/adaptive_moment_estimation.cpp
-			${PLUGIN_DIR}/libraries/opennn/batch_normalization_layer.cpp
 			${PLUGIN_DIR}/libraries/opennn/bounding_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/codification.cpp
 			${PLUGIN_DIR}/libraries/opennn/conjugate_gradient.cpp
 			${PLUGIN_DIR}/libraries/opennn/convolutional_layer.cpp
 			${PLUGIN_DIR}/libraries/opennn/correlations.cpp
 			${PLUGIN_DIR}/libraries/opennn/cross_entropy_error.cpp
 			${PLUGIN_DIR}/libraries/opennn/data_set.cpp
-			${PLUGIN_DIR}/libraries/opennn/flatten_layer.cpp
 			${PLUGIN_DIR}/libraries/opennn/genetic_algorithm.cpp
 			${PLUGIN_DIR}/libraries/opennn/gradient_descent.cpp
 			${PLUGIN_DIR}/libraries/opennn/growing_inputs.cpp
 			${PLUGIN_DIR}/libraries/opennn/growing_neurons.cpp
 			${PLUGIN_DIR}/libraries/opennn/inputs_selection.cpp
-			${PLUGIN_DIR}/libraries/opennn/json_to_xml.cpp
 			${PLUGIN_DIR}/libraries/opennn/layer.cpp
 			${PLUGIN_DIR}/libraries/opennn/learning_rate_algorithm.cpp
 			${PLUGIN_DIR}/libraries/opennn/levenberg_marquardt_algorithm.cpp
@@ -40,7 +36,6 @@ list(APPEND PLUGIN_SRCS
 			${PLUGIN_DIR}/libraries/opennn/neurons_selection.cpp
 			${PLUGIN_DIR}/libraries/opennn/normalized_squared_error.cpp
 			${PLUGIN_DIR}/libraries/opennn/numerical_differentiation.cpp
-			${PLUGIN_DIR}/libraries/opennn/opennn_images.cpp
 			${PLUGIN_DIR}/libraries/opennn/opennn_strings.cpp
 			${PLUGIN_DIR}/libraries/opennn/optimization_algorithm.cpp
 			${PLUGIN_DIR}/libraries/opennn/perceptron_layer.cpp
@@ -50,16 +45,12 @@ list(APPEND PLUGIN_SRCS
 			${PLUGIN_DIR}/libraries/opennn/pruning_inputs.cpp
 			${PLUGIN_DIR}/libraries/opennn/quasi_newton_method.cpp
 			${PLUGIN_DIR}/libraries/opennn/recurrent_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/region_based_object_detector.cpp
 			${PLUGIN_DIR}/libraries/opennn/response_optimization.cpp
-			${PLUGIN_DIR}/libraries/opennn/scaling.cpp
 			${PLUGIN_DIR}/libraries/opennn/scaling_layer.cpp
 			${PLUGIN_DIR}/libraries/opennn/statistics.cpp
 			${PLUGIN_DIR}/libraries/opennn/stochastic_gradient_descent.cpp
 			${PLUGIN_DIR}/libraries/opennn/sum_squared_error.cpp
-			${PLUGIN_DIR}/libraries/opennn/tensor_utilities.cpp
 			${PLUGIN_DIR}/libraries/opennn/testing_analysis.cpp
-			${PLUGIN_DIR}/libraries/opennn/text_analytics.cpp
 			${PLUGIN_DIR}/libraries/opennn/tinyxml2.cpp
 			${PLUGIN_DIR}/libraries/opennn/training_strategy.cpp
 			${PLUGIN_DIR}/libraries/opennn/unit_testing.cpp

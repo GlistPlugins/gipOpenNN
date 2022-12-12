@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N P U T S   S E L E C T I O N   C L A S S   H E A D E R
+//   I N P U T S   S E L E C T I O N   A L G O R I T H M   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -24,10 +24,8 @@
 #include "training_strategy.h"
 #include "config.h"
 
-namespace opennn
+namespace OpenNN
 {
-
-struct InputsSelectionResults;
 
 /// This abstract class represents the concept of inputs selection algorithm for a ModelSelection[1].
 
@@ -47,20 +45,87 @@ public:
 
     explicit InputsSelection(TrainingStrategy*);
 
+    // Destructor
+
+    virtual ~InputsSelection();
+
     // Enumerations
 
-    /// Enumeration of all possible conditions of stop for the algorithms.
+    /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum class StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumInputs, MinimumInputs, MaximumEpochs,
-                           MaximumSelectionFailures, CorrelationGoal};
+    enum StoppingCondition{MaximumTime,SelectionErrorGoal,MaximumInputs,MinimumInputs,MaximumEpochs,
+                           MaximumSelectionFailures,CorrelationGoal,AlgorithmFinished};
+
+    // STRUCTURES
+
+    /// This structure contains the results from the inputs selection.
+
+    struct Results
+    {
+       explicit Results() {}
+
+       virtual ~Results() {}
+
+       string write_stopping_condition() const;
+
+       /// Inputs of the different neural networks.
+
+       Tensor<bool, 2> inputs_data;
+       
+       /// Performance of the different neural networks.
+
+       Tensor<type, 1> training_error_data;
+
+       /// Selection loss of the different neural networks.
+
+       Tensor<type, 1> selection_error_data;
+
+       /// Vector of parameters for the neural network with minimum selection error.
+
+       Tensor<type, 1> minimal_parameters;
+
+       /// Value of minimum selection error.
+
+       type final_selection_error;
+
+       /// Value of loss for the neural network with minimum selection error.
+
+       type final_training_error;
+
+       /// Inputs of the neural network with minimum selection error.
+
+       Tensor<Index, 1> optimal_inputs_indices;
+
+       /// Inputs of the neural network with minimum selection error.
+
+       Tensor<bool, 1> optimal_inputs;
+
+       /// Number of iterations to perform the inputs selection.
+
+       Index iterations_number;
+
+       /// Stopping condition of the algorithm.
+
+       StoppingCondition stopping_condition;
+
+       /// Elapsed time during the loss of the algortihm.
+
+       string elapsed_time;
+    };
 
     // Get methods
+
+    const bool& get_approximation() const;
 
     TrainingStrategy* get_training_strategy_pointer() const;
 
     bool has_training_strategy() const;
 
     const Index& get_trials_number() const;
+
+    const bool& get_reserve_training_error_data() const;
+    const bool& get_reserve_selection_error_data() const;
+    const bool& get_reserve_minimal_parameters() const;
 
     const bool& get_display() const;
 
@@ -73,39 +138,59 @@ public:
 
     // Set methods
 
-    void set(TrainingStrategy*);
+    void set_approximation(const bool&);
 
-    virtual void set_default();
+    void set_training_strategy_pointer(TrainingStrategy*);
+
+    void set_default();
 
     void set_trials_number(const Index&);
+
+    void set_reserve_training_error_data(const bool&);
+    void set_reserve_selection_error_data(const bool&);
+    void set_reserve_minimal_parameters(const bool&);
 
     void set_display(const bool&);
 
     void set_selection_error_goal(const type&);
-    void set_maximum_epochs_number(const Index&);
+    void set_maximum_iterations_number(const Index&);
     void set_maximum_time(const type&);
     void set_maximum_correlation(const type&);
     void set_minimum_correlation(const type&);
+    void set_tolerance(const type&);
 
     // Performances calculation methods
 
-    string write_stopping_condition(const TrainingResults&) const;
+    Tensor<type, 1> calculate_losses(const Tensor<bool, 1>&);
+
+    Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) const;
+
+    string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
     // inputs selection methods
 
+    void delete_selection_history();
+    void delete_loss_history();
+    void delete_parameters_history();
     void check() const;
 
     // Utilities
 
-    Index get_input_index(const Tensor<DataSet::VariableUse, 1>&, const Index&) const;
+    Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
+    Tensor<Index, 1> insert_result(const Index&, const Tensor<Index, 1>&) const;
+    Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
+
+    Tensor<Index, 1> delete_result(const Index&, const Tensor<Index, 1>&) const;
+
+    Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index);
 
     /// Performs the inputs selection for a neural network.
 
-    virtual InputsSelectionResults perform_inputs_selection() = 0;
+    virtual Results* perform_inputs_selection() = 0;
 
     /// Writes the time from seconds in format HH:mm:ss.
 
-    string write_time(const type&) const;
+    const string write_elapsed_time(const type&) const;
 
 protected:
 
@@ -113,12 +198,43 @@ protected:
 
     TrainingStrategy* training_strategy_pointer = nullptr;
 
-    Tensor<Index, 1> original_input_columns_indices;
-    Tensor<Index, 1> original_target_columns_indices;
+    /// True if this is a function regression problem.
+
+    bool approximation;
+
+    /// Inputs of all the neural networks trained.
+
+    Tensor<bool, 2> inputs_history;
+
+    /// Selection loss of all the neural networks trained.
+
+    Tensor<type, 1> selection_error_history;
+
+    /// Performance of all the neural networks trained.
+
+    Tensor<type, 1> training_error_history;
+
+    /// Parameters of all the neural network trained.
+
+    Tensor<Tensor<type, 1>, 1> parameters_history;
 
     /// Number of trials for each neural network.
 
     Index trials_number = 1;
+
+    // Inputs selection results
+
+    /// True if the loss of all neural networks are to be reserved.
+
+    bool reserve_training_error_data;
+
+    /// True if the selection error of all neural networks are to be reserved.
+
+    bool reserve_selection_error_data;
+
+    /// True if the vector parameters of the neural network presenting minimum selection error is to be reserved.
+
+    bool reserve_minimal_parameters;
 
     /// Display messages to screen.
 
@@ -126,11 +242,11 @@ protected:
 
     // Stopping criteria
 
-    /// Goal value for the selection error. It is a stopping criterion.
+    /// Goal value for the selection error. It is used as a stopping criterion.
 
     type selection_error_goal;
 
-    /// Maximum number of epochs to perform_inputs_selection. It is a stopping criterion.
+    /// Maximum number of epochs to perform_inputs_selection. It is used as a stopping criterion.
 
     Index maximum_epochs_number;
 
@@ -142,130 +258,20 @@ protected:
 
     type minimum_correlation;
 
-    /// Maximum selection algorithm time. It is a stopping criterion.
+    /// Maximum selection algorithm time. It is used as a stopping criterion.
 
     type maximum_time;
 
-    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+    /// Tolerance for the error in the trainings of the algorithm.
+
+    type tolerance;
 };
-
-
-/// This structure contains the results from the inputs selection.
-
-struct InputsSelectionResults
-{
-    // Default constructor
-
-    explicit InputsSelectionResults()
-    {
-    }
-
-    // Maximum epochs number constructor
-
-    explicit InputsSelectionResults(const Index& maximum_epochs_number)
-    {
-        set(maximum_epochs_number);
-    }
-
-    Index get_epochs_number() const
-    {
-        return training_error_history.size();
-    }
-
-    void set(const Index& maximum_epochs_number)
-    {
-        training_error_history.resize(maximum_epochs_number);
-        training_error_history.setConstant(type(-1));
-
-        selection_error_history.resize(maximum_epochs_number);
-        selection_error_history.setConstant(type(-1));
-    }
-
-   virtual ~InputsSelectionResults() {}
-
-   string write_stopping_condition() const;
-
-   void resize_history(const Index& new_size)
-   {
-       const Tensor<type, 1> old_training_error_history = training_error_history;
-       const Tensor<type, 1> old_selection_error_history = selection_error_history;
-
-       training_error_history.resize(new_size);
-       selection_error_history.resize(new_size);
-
-       for(Index i = 0; i < new_size; i++)
-       {
-           training_error_history(i) = old_training_error_history(i);
-           selection_error_history(i) = old_selection_error_history(i);
-       }
-   }
-
-
-   void print() const
-   {
-       cout << endl;
-       cout << "Inputs Selection Results" << endl;
-
-       cout << "Optimal inputs number: " << optimal_input_columns_names.size() << endl;
-
-       cout << "Inputs: " << endl;
-
-       for(Index i = 0; i < optimal_input_columns_names.size(); i++) cout << "   " << optimal_input_columns_names(i) << endl;
-
-       cout << "Optimum training error: " << optimum_training_error << endl;
-       cout << "Optimum selection error: " << optimum_selection_error << endl;
-   }
-
-
-   // Neural network
-
-   /// Vector of parameters for the neural network with minimum selection error.
-
-   Tensor<type, 1> optimal_parameters;
-
-   // Loss index
-
-   /// Final training errors of the different neural networks.
-
-   Tensor<type, 1> training_error_history;
-
-   /// Final selection errors of the different neural networks.
-
-   Tensor<type, 1> selection_error_history;
-
-   /// Value of training for the neural network with minimum selection error.
-
-   type optimum_training_error = numeric_limits<type>::max();
-
-   /// Value of minimum selection error.
-
-   type optimum_selection_error = numeric_limits<type>::max();
-
-   /// Inputs of the neural network with minimum selection error.
-
-   Tensor<string, 1> optimal_input_columns_names;
-
-   Tensor<Index, 1> optimal_input_columns_indices;
-
-   Tensor<bool, 1> optimal_inputs;
-
-   // Model selection
-
-   /// Stopping condition of the algorithm.
-
-   InputsSelection::StoppingCondition stopping_condition = InputsSelection::StoppingCondition::MaximumTime;
-
-   /// Elapsed time during the loss of the algortihm.
-
-   string elapsed_time;
-};
-
 }
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -26,9 +26,8 @@
 #include "inputs_selection.h"
 
 
-namespace opennn
+namespace OpenNN
 {
-struct InputsSelectionResults;
 
 /// This concrete class represents a pruning inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
 
@@ -45,6 +44,32 @@ public:
 
     explicit PruningInputs(TrainingStrategy*); 
 
+    virtual ~PruningInputs();
+
+
+    // STRUCTURES
+
+    ///
+    /// This structure contains the training results for the pruning inputs method.
+    ///
+
+    struct PruningInputsResults : public InputsSelection::Results
+    {
+        /// Default constructor.
+
+        explicit PruningInputsResults() : InputsSelection::Results()
+        {
+        }
+
+        /// Destructor.
+
+        virtual ~PruningInputsResults()
+        {
+        }
+
+    };
+
+
     // Get methods
 
     const Index& get_minimum_inputs_number() const;
@@ -55,7 +80,7 @@ public:
 
     // Set methods
 
-    virtual void set_default();
+    void set_default();
 
     void set_minimum_inputs_number(const Index&);
 
@@ -63,18 +88,20 @@ public:
 
     void set_maximum_selection_failures(const Index&);
 
-    // Neurons selection methods
+    // Order selection methods
 
-    InputsSelectionResults perform_inputs_selection() final;
+    PruningInputsResults* perform_inputs_selection();
 
     // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
 
+    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     
+
     void save(const string&) const;
     void load(const string&);
 
@@ -100,7 +127,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

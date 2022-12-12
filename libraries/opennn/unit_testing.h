@@ -24,7 +24,7 @@
 
 #include "../opennn/opennn.h"
 
-using namespace opennn;
+using namespace OpenNN;
 
 class UnitTesting
 {
@@ -33,12 +33,15 @@ public:
 
    explicit UnitTesting();   
 
+   virtual ~UnitTesting();
+
    // Get methods
 
    Index get_tests_count() const;
    Index get_tests_passed_count() const;
    Index get_tests_failed_count() const;
 
+   bool get_numerical_differentiation_tests() const;
    Index get_random_tests_number() const;
 
    const bool& get_display() const;
@@ -49,6 +52,7 @@ public:
    void set_tests_passed_count(const Index&);
    void set_tests_failed_count(const Index&);
 
+   void set_numerical_differentiation_tests(const bool&);
    void set_random_tests_number(const Index&);
 
    void set_message(const string&);
@@ -72,34 +76,33 @@ protected:
 
    /// Number of performed tests.
 
-   Index tests_count = 0;
+   Index tests_count;
 
    /// Number of tests which have passed the test case.
  
-   Index tests_passed_count = 0;
+   Index tests_passed_count;
 
    /// Number of tests which have failed the test case.
 
-   Index tests_failed_count = 0;
+   Index tests_failed_count;
+
+   /// True if test using numerical differentiation are to be performed.
+
+   bool numerical_differentiation_tests;
 
    /// Number of iterations in random tests loops.
 
-   Index random_tests_number = 0;
+   Index random_tests_number;
 
-   /// True if messages from this class are displayed and false otherwise.
+   /// True if messages from this class are to be displayed, false otherwise.
 
    bool display = true;
-
-   const int n = omp_get_max_threads();
-   ThreadPool* thread_pool = new ThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(thread_pool, n);
-
 };
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -19,6 +19,7 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
+#include <omp.h>
 
 // OpenNN includes
 
@@ -27,7 +28,7 @@
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 
-namespace opennn
+namespace OpenNN
 {
 
 /// A learning rate that is adjusted according to an algorithm during training to minimize training time.
@@ -46,7 +47,7 @@ public:
 
    /// Available training operators for obtaining the perform_training rate.
 
-   enum class LearningRateMethod{GoldenSection, BrentMethod};
+   enum LearningRateMethod{GoldenSection, BrentMethod};
 
    // Constructors
 
@@ -108,11 +109,45 @@ public:
 
            losses.setValues({A.second, U.second, B.second});
 
-           const Index minimal_index = opennn::minimal_index(losses);
+           const Index minimal_index = OpenNN::minimal_index(losses);
 
            if(minimal_index == 0) return A;
            else if(minimal_index == 1) return U;
            else return B;
+       }
+
+       /// Returns true if the length of the interval(A,B) is zero,
+       /// and false otherwise.
+
+       inline bool has_length_zero() const
+       {
+           /*
+           if(abs(A.first - B.first) < numeric_limits<type>::min())
+           {
+              return true;
+           }
+           else
+           {
+              return false;
+           }
+           */
+           return false;
+       }
+
+       /// Returns true if the interval(A,B) is constant,
+       /// and false otherwise.
+
+       inline bool is_constant() const
+       {
+           /*if(abs(A.second - B.second) < numeric_limits<type>::min())
+           {
+              return true;
+           }
+           else
+           {
+              return false;
+           }*/
+           return false;
        }
 
        /// Writes a string with the values of A, U and B.
@@ -151,7 +186,7 @@ public:
                      << "U is less than A:\n"
                      << struct_to_string();
 
-              throw invalid_argument(buffer.str());
+              throw logic_error(buffer.str());
            }
 
            if(U.first > B.first)
@@ -161,7 +196,7 @@ public:
                      << "U is greater than A:\n"
                      << struct_to_string();
 
-              throw invalid_argument(buffer.str());
+              throw logic_error(buffer.str());
            }
 
            if(U.second >= A.second)
@@ -171,7 +206,7 @@ public:
                      << "fU is equal or greater than fA:\n"
                      << struct_to_string();
 
-              throw invalid_argument(buffer.str());
+              throw logic_error(buffer.str());
            }
 
            if(U.second >= B.second)
@@ -181,7 +216,7 @@ public:
                      << "fU is equal or greater than fB:\n"
                      << struct_to_string();
 
-              throw invalid_argument(buffer.str());
+              throw logic_error(buffer.str());
            }
        }
 
@@ -238,24 +273,25 @@ public:
 
    void set_display(const bool&);
 
-   virtual void set_default();
+   void set_default();
 
    // Learning rate methods
 
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
-   Triplet calculate_bracketing_triplet(const DataSetBatch&,
-                                        NeuralNetworkForwardPropagation&,
-                                        LossIndexBackPropagation&,
-                                        OptimizationAlgorithmData&) const;
+   Triplet calculate_bracketing_triplet(const DataSet::Batch&,
+                                        NeuralNetwork::ForwardPropagation&,
+                                        LossIndex::BackPropagation&,
+                                        OptimizationAlgorithm::OptimizationData&) const;
 
-   pair<type, type> calculate_directional_point(const DataSetBatch&,
-                                                NeuralNetworkForwardPropagation&,
-                                                LossIndexBackPropagation&,
-                                                OptimizationAlgorithmData&) const;
+   pair<type, type> calculate_directional_point(const DataSet::Batch&,
+                                                NeuralNetwork::ForwardPropagation&,
+                                                LossIndex::BackPropagation&,
+                                                OptimizationAlgorithm::OptimizationData&) const;
 
    // Serialization methods
+
       
    void from_XML(const tinyxml2::XMLDocument&);   
 
@@ -277,9 +313,9 @@ protected:
 
    /// Maximum interval length for the learning rate.
 
-   type learning_rate_tolerance;
+   type learning_rate_tolerance = static_cast<type>(1.0e-3);
 
-   type loss_tolerance;
+   type loss_tolerance = static_cast<type>(1.0e-3);
 
    // UTILITIES
 
@@ -289,8 +325,20 @@ protected:
 
    const type golden_ratio = static_cast<type>(1.618);
 
-   ThreadPool* thread_pool = nullptr;
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
+
+   bool is_zero(const Tensor<type, 1>& tensor) const
+   {
+       const Index size = tensor.size();
+
+       for(Index i = 0; i < size; i++)
+       {
+           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
+       }
+
+       return true;
+   }
 };
 
 }
@@ -299,7 +347,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

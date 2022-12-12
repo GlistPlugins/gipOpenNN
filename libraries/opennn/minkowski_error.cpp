@@ -8,12 +8,12 @@
 
 #include "minkowski_error.h"
 
-namespace opennn
+namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates Minkowski error term not associated with any neural network and not measured on any data set.
-/// It also initializes all the rest of the class members to their default values.
+/// It creates Minkowski error term not associated to any neural network and not measured on any data set.
+/// It also initializes all the rest of class members to their default values.
 
 MinkowskiError::MinkowskiError() : LossIndex()
 {
@@ -22,8 +22,8 @@ MinkowskiError::MinkowskiError() : LossIndex()
 
 
 /// Neural network and data set constructor.
-/// It creates a Minkowski error term object associated with a neural network and measured on a data set.
-/// It also initializes all the rest of the class members to their default values.
+/// It creates a Minkowski error term object associated to a neural network and measured on a data set.
+/// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
@@ -32,6 +32,15 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSe
 {
     set_default();
 }
+
+
+/// Destructor.
+/// It does not delete any pointer.
+
+MinkowskiError::~MinkowskiError()
+{
+}
+
 
 /// Returns the Minkowski exponent value used to calculate the error.
 
@@ -49,13 +58,13 @@ type MinkowskiError::get_Minkowski_parameter() const
 
 void MinkowskiError::set_default()
 {
-    minkowski_parameter = type(1.5);
+    minkowski_parameter = 1.5;
 
     display = true;
 }
 
 
-/// Sets a new Minkowski exponent value to be used to calculate the error.
+/// Sets a new Minkowski exponent value to be used in order to calculate the error.
 /// The Minkowski R-value must be comprised between 1 and 2.
 /// @param new_Minkowski_parameter Minkowski exponent value.
 
@@ -63,15 +72,15 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 {
     // Control sentence
 
-    if(new_Minkowski_parameter < type(1))
+    if(new_Minkowski_parameter < static_cast<Index>(1.0) || new_Minkowski_parameter > static_cast<type>(2.0))
     {
         ostringstream buffer;
 
         buffer << "OpenNN Error. MinkowskiError class.\n"
                << "void set_Minkowski_parameter(const type&) method.\n"
-               << "The Minkowski parameter must be greater than 1.\n";
+               << "The Minkowski parameter must be comprised between 1 and 2.\n";
 
-        throw invalid_argument(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Set Minkowski parameter
@@ -80,52 +89,68 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 }
 
 
-/// \brief MinkowskiError::calculate_error
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
-/// @todo Divide by number of samples.
-
-void MinkowskiError::calculate_error(const DataSetBatch& batch,
-                                     const NeuralNetworkForwardPropagation&,
-                                     LossIndexBackPropagation& back_propagation) const
+////// \brief MinkowskiError::calculate_error
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
+void MinkowskiError::calculate_error(const DataSet::Batch& batch,
+                     const NeuralNetwork::ForwardPropagation& forward_propagation,
+                     LossIndex::BackPropagation& back_propagation) const
 {
     Tensor<type, 0> minkowski_error;
 
-    minkowski_error.device(*thread_pool_device)
-            = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Index batch_size = batch.get_batch_size();
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
 
-    back_propagation.error = minkowski_error(0)/type(batch_size);
+    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
+
+    minkowski_error.device(*thread_pool_device) = (back_propagation.errors.abs().pow(minkowski_parameter).sum()).pow(static_cast<type>(1.0)/minkowski_parameter);
+
+    back_propagation.error = minkowski_error(0);
 }
 
 
-void MinkowskiError::calculate_output_delta(const DataSetBatch& batch,
-                                            NeuralNetworkForwardPropagation&,
-                                            LossIndexBackPropagation& back_propagation) const
+void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
+                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+                               BackPropagation& back_propagation) const
 {
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+     #ifdef __OPENNN_DEBUG__
 
-    LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+     check();
+     for (Index i=1; i<back_propagation.output_gradient.dimension(0); i++) {
+         if(::isnan(back_propagation.output_gradient(i))){
+             ostringstream buffer;
 
-    TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
+             buffer << "OpenNN Exception: MinkowskiError class.\n"
+                    << "void calculate_output_gradient method (const DataSet::Batch& batch, \n"
+                    << "const NeuralNetwork::ForwardPropagation& forward_propagation, \n"
+                    << "BackPropagation& back_propagation) \n"
+                    << "Output gradient is NAN. Modify Minkowski Parameter.\n";
 
-    const Tensor<type, 0> p_norm_derivative =
-            (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter - type(1));
+             throw logic_error(buffer.str());
+         }
+     }
 
-    const Index batch_size = batch.get_batch_size();
+     #endif
 
-    if(abs(p_norm_derivative()) < type(NUMERIC_LIMITS_MIN))
-    {
-        deltas.setZero();
-    }
-    else
-    {
-        deltas.device(*thread_pool_device) = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - type(2)));
+     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-        deltas.device(*thread_pool_device) = (type(1.0/batch_size))*deltas/p_norm_derivative();
-    }
+     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+     const Tensor<type, 2>& targets = batch.targets_2d;
+
+     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
+
+     const Tensor<type, 0> p_norm_derivative =
+             (back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
+
+     back_propagation.output_gradient.device(*thread_pool_device)
+             = back_propagation.errors*(back_propagation.errors.abs().pow(minkowski_parameter - 2));
+
+     back_propagation.output_gradient.device(*thread_pool_device) =
+             back_propagation.output_gradient/(p_norm_derivative());
+
 }
 
 
@@ -145,7 +170,7 @@ string MinkowskiError::get_error_type_text() const
 }
 
 
-/// Serializes the cross-entropy error object into an XML document of the TinyXML library without keeping the DOM tree in memory.
+/// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 
 void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -173,7 +198,7 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Loads a Minkowski error object from an XML document.
+/// Loads a Minkowski error object from a XML document.
 /// @param document TinyXML document containing the members of the object.
 
 void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
@@ -188,16 +213,18 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Minkowski error element is nullptr.\n";
 
-        throw invalid_argument(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Minkowski parameter
+
+//    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
 
     if(root_element)
     {
         const tinyxml2::XMLElement* parameter_element = root_element->FirstChildElement("MinkowskiParameter");
 
-        type new_Minkowski_parameter = type(1.5);
+        type new_Minkowski_parameter = 1.5;
 
         if(parameter_element)
         {
@@ -208,7 +235,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
         {
             set_Minkowski_parameter(new_Minkowski_parameter);
         }
-        catch(const invalid_argument& e)
+        catch(const logic_error& e)
         {
             cerr << e.what() << endl;
         }
@@ -218,7 +245,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

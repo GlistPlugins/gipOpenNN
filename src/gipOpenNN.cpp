@@ -26,10 +26,11 @@ void gipOpenNN::loadDatasetFile(std::string datasetFilePath, char delimiter, boo
 	loadDataset(gGetFilesDir() + datasetFilePath, delimiter, hasColumnNames);
 }
 
-void gipOpenNN::createNeuralNetwork(const ProjectType& projectType, int hiddenNeuronsNum) {
-	gipOpenNN::Tensor<gipOpenNN::Index, 1> architecture(hiddenNeuronsNum);
-	architecture.setValues({dataset->get_input_variables_number(), hiddenNeuronsNum, dataset->get_target_variables_number()});
-	neuralnetwork = new NeuralNetwork(projectType, architecture);
+void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, const Tensor<Index, 1>& tensor) {
+	neuralnetwork = new NeuralNetwork(projectType, tensor);
+}
+
+void gipOpenNN::createTrainingStrategy() {
 	trainingstrategy = new TrainingStrategy(neuralnetwork, dataset);
 }
 
@@ -49,12 +50,7 @@ void gipOpenNN::performConfusionTest() {
 	confusion = testinganalysis->calculate_confusion();
 }
 
-const Tensor<type, 2> gipOpenNN::calculateOutputs(Tensor<type, 2>& inputs) {
-	Tensor<Index, 1> input_dims = get_dimensions(inputs);
-	return getNeuralNetwork()->calculate_outputs(inputs.data(), input_dims);
-}
-
-void gipOpenNN::saveOutputs(Tensor<float, 2>& inputs, std::string csvFilename) {
+void gipOpenNN::saveOutputs(const gipOpenNN::Tensor<float, 2>& inputs, std::string csvFilename) {
 	neuralnetwork->save_outputs(inputs, gGetFilesDir() + csvFilename);
 }
 
@@ -91,19 +87,7 @@ gipOpenNN::TrainingStrategy* gipOpenNN::getTrainingStrategy() {
 	return trainingstrategy;
 }
 
-void gipOpenNN::setLossMethod(gipOpenNN::LossMethod lossMethod) {
-	trainingstrategy->set_loss_method(lossMethod);
-}
-
-void gipOpenNN::setOptimizationMethod(gipOpenNN::OptimizationMethod optimizationMethod) {
-	trainingstrategy->set_optimization_method(optimizationMethod);
-}
-
-void gipOpenNN::setRegularizationMethod(RegularizationMethod regularizationMethod) {
-	trainingstrategy->get_loss_index_pointer()->set_regularization_method(regularizationMethod);
-}
-
-gipOpenNN::TrainingResults* gipOpenNN::getTrainingResults() {
+gipOpenNN::OptimizationAlgorithm::Results* gipOpenNN::getTrainingResults() {
 	return &trainingresults;
 }
 

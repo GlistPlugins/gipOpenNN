@@ -25,10 +25,8 @@
 #include "neurons_selection.h"
 #include "config.h"
 
-namespace opennn
+namespace OpenNN
 {
-
-struct GrowingNeuronsResults;
 
 /// This concrete class represents an growing neurons algorithm for the NeuronsSelection as part of the ModelSelection[1] class.
 
@@ -46,6 +44,27 @@ public:
 
     explicit GrowingNeurons(TrainingStrategy*);
 
+    // Destructor
+
+    virtual ~GrowingNeurons();
+
+    /// This structure contains the training results for the growing neurons method.
+
+    struct GrowingNeuronsResults : public NeuronsSelection::Results
+    {
+        /// Default constructor.
+
+        explicit GrowingNeuronsResults() : NeuronsSelection::Results()
+        {
+        }
+
+        /// Destructor.
+
+        virtual ~GrowingNeuronsResults()
+        {
+        }
+    };
+
     // Get methods
 
     const Index& get_step() const;
@@ -54,15 +73,15 @@ public:
 
     // Set methods
 
-    virtual void set_default();
+    void set_default();
 
-    void set_neurons_increment(const Index&);
+    void set_step(const Index&);
 
     void set_maximum_selection_failures(const Index&);
 
-    // Neurons selection methods
+    // Order selection methods
 
-    NeuronsSelectionResults perform_neurons_selection() final;
+    GrowingNeuronsResults* perform_neurons_selection();
 
     // Serialization methods
 
@@ -79,7 +98,7 @@ private:
 
    /// Number of neurons added at each iteration.
 
-   Index neurons_increment;
+   Index step;
 
    /// Maximum number of epochs at which the selection error increases.
 
@@ -92,7 +111,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -8,13 +8,13 @@
 
 #include "mean_squared_error.h"
 
-namespace opennn
+namespace OpenNN
 {
 
 /// Default constructor.
-/// It creates a mean squared error term not associated with any
+/// It creates a mean squared error term not associated to any
 /// neural network and not measured on any data set.
-/// It also initializes all the rest of the class members to their default values.
+/// It also initializes all the rest of class members to their default values.
 
 MeanSquaredError::MeanSquaredError() : LossIndex()
 {
@@ -22,9 +22,9 @@ MeanSquaredError::MeanSquaredError() : LossIndex()
 
 
 /// Neural network and data set constructor.
-/// It creates a mean squared error term object associated with a
+/// It creates a mean squared error term object associated to a
 /// neural network and measured on a data set.
-/// It also initializes all the rest of the class members to their default values.
+/// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
@@ -34,135 +34,122 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, Da
 }
 
 
-/// \brief MeanSquaredError::calculate_error
-/// \param batch
-/// \param forward_propagation
-/// \param back_propagation
+/// Destructor.
 
-void MeanSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation&,
-                     LossIndexBackPropagation& back_propagation) const
+MeanSquaredError::~MeanSquaredError()
+{
+}
+
+
+////// \brief MeanSquaredError::calculate_error
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
+void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
+                     const NeuralNetwork::ForwardPropagation& forward_propagation,
+                     LossIndex::BackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
 
-    const Index batch_samples_number = batch.get_batch_size();
-
-    const type coefficient = static_cast<type>(batch_samples_number);
-
-    sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
-
-    back_propagation.error = sum_squared_error(0)/coefficient;
-}
-
-
-void MeanSquaredError::calculate_error_lm(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation&,
-                     LossIndexBackPropagationLM& back_propagation) const
-{
-    Tensor<type, 0> sum_squared_error;
-
-    const Index batch_samples_number = batch.get_batch_size();
-
-    sum_squared_error.device(*thread_pool_device) = (back_propagation.squared_errors*back_propagation.squared_errors).sum();
-
-    const type coefficient = static_cast<type>(batch_samples_number);
-
-    back_propagation.error = sum_squared_error(0)/coefficient;
-}
-
-
-void MeanSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                              NeuralNetworkForwardPropagation&,
-                                              LossIndexBackPropagation& back_propagation) const
-{
-     #ifdef OPENNN_DEBUG
-     check();
-     #endif
-
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-     const LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
-
-     const Index batch_samples_number = batch.get_batch_size();
-
-     const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
-
-     TensorMap<Tensor<type, 2>> deltas(output_layer_back_propagation->deltas_data, output_layer_back_propagation->deltas_dimensions(0), output_layer_back_propagation->deltas_dimensions(1));
-
-     deltas.device(*thread_pool_device) = coefficient*back_propagation.errors;
-
-}
-
-
-void MeanSquaredError::calculate_output_delta_lm(const DataSetBatch&,
-                                                 NeuralNetworkForwardPropagation&,
-                                                 LossIndexBackPropagationLM& loss_index_back_propagation) const
-{
-#ifdef OPENNN_DEBUG
-    check();
-#endif
+    const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    LayerBackPropagationLM* output_layer_back_propagation = loss_index_back_propagation.neural_network.layers(trainable_layers_number-1);
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
 
-    const Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;  
+    back_propagation.errors.device(*thread_pool_device) = outputs - targets;
 
-    if(output_layer_pointer->get_type() != Layer::Type::Perceptron && output_layer_pointer->get_type() != Layer::Type::Probabilistic)
-    {
-        ostringstream buffer;
+    sum_squared_error.device(*thread_pool_device) = back_propagation.errors.contract(back_propagation.errors, SSE);
 
-        buffer << "OpenNN Exception: MeanSquaredError class.\n"
-               << "Levenberg-Marquardt can only be used with Perceptron and Probabilistic layers.\n";
-
-        throw invalid_argument(buffer.str());
-    }
-
-    copy(loss_index_back_propagation.errors.data(),
-         loss_index_back_propagation.errors.data() + loss_index_back_propagation.errors.size(),
-         output_layer_back_propagation->deltas.data());
-
-    divide_columns(output_layer_back_propagation->deltas, loss_index_back_propagation.squared_errors);
+    back_propagation.error = sum_squared_error(0)/static_cast<type>(batch_samples_number);
 }
 
 
-void MeanSquaredError::calculate_error_gradient_lm(const DataSetBatch& batch,
-                                             LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+void MeanSquaredError::calculate_error_terms(const DataSet::Batch& batch,
+                                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                                   SecondOrderLoss& second_order_loss) const
 {
-#ifdef OPENNN_DEBUG
+
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const Index batch_samples_number = batch.get_samples_number();
+
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+
+    second_order_loss.error_terms.resize(outputs.dimension(0));
+    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+
+    second_order_loss.error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+
+    Tensor<type, 0> error;
+    error.device(*thread_pool_device) = second_order_loss.error_terms.contract(second_order_loss.error_terms, AT_B);
+
+    second_order_loss.error = error()/static_cast<type>(batch_samples_number);
+}
+
+
+void MeanSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
+                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+                               BackPropagation& back_propagation) const
+{
+     #ifdef __OPENNN_DEBUG__
+
+     check();
+
+     #endif
+
+     const Index batch_samples_number = batch.inputs_2d.dimension(0);
+
+     const type coefficient = static_cast<type>(2.0)/static_cast<type>(batch_samples_number);
+
+     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+     const Tensor<type, 2>& targets = batch.targets_2d;
+
+     back_propagation.errors.device(*thread_pool_device) = outputs - targets;
+
+     back_propagation.output_gradient.device(*thread_pool_device) = coefficient*back_propagation.errors;
+}
+
+
+void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
+                                                   LossIndex::SecondOrderLoss& second_order_loss) const
+{
+#ifdef __OPENNN_DEBUG__
 
     check();
 
 #endif
 
-    const Index batch_size = batch.get_batch_size();
+    const Index batch_samples_number = batch.get_samples_number();
 
-    const type coefficient = type(2)/static_cast<type>(batch_size);
+    const type coefficient = static_cast<type>(2)/static_cast<type>(batch_samples_number);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+    second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms, AT_B);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = coefficient * loss_index_back_propagation_lm.gradient;
+    second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
 }
 
 
-void MeanSquaredError::calculate_error_hessian_lm(const DataSetBatch& batch,
-                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
+
+void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const
 {
-     #ifdef OPENNN_DEBUG
+     #ifdef __OPENNN_DEBUG__
+
      check();
+
      #endif
 
-     const Index batch_samples_number = batch.get_batch_size();
+     const Index batch_samples_number = batch.inputs_2d.dimension(0);
 
      const type coefficient = (static_cast<type>(2.0)/static_cast<type>(batch_samples_number));
 
-     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
+     second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_terms_Jacobian.contract(second_order_loss.error_terms_Jacobian, AT_B);
 
-     loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = coefficient*loss_index_back_propagation_lm.hessian;
+     second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
 }
 
 
@@ -182,7 +169,7 @@ string MeanSquaredError::get_error_type_text() const
 }
 
 
-/// Serializes the cross-entropy error object into an XML document of the TinyXML library without keeping the DOM tree in memory.
+/// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 
 void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -198,7 +185,7 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

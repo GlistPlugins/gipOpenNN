@@ -1,4 +1,3 @@
-// @todo Test this method
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -27,7 +26,7 @@
 #include "opennn_strings.h"
 
 
-namespace opennn
+namespace OpenNN
 {
 
 /// This class represents a layer of unscaling neurons.
@@ -49,18 +48,30 @@ public:
 
    explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
 
-   // Get methods  
+   // Destructor
 
-   Index get_inputs_number() const override;
-   Index get_neurons_number() const final;
+   virtual ~UnscalingLayer();
+
+   // Enumerations
+
+   /// Enumeration of available methods for input variables, output variables and independent parameters scaling.  
+   
+   enum UnscalingMethod{NoUnscaling, MinimumMaximum, MeanStandardDeviation, Logarithmic};
+
+   // Get methods
+
+   
+
+   Index get_inputs_number() const;
+   Index get_neurons_number() const;
 
    Tensor<Descriptives, 1> get_descriptives() const;
-   
+   Tensor<type, 2> get_descriptives_matrix() const;
 
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
-   Tensor<Scaler, 1> get_unscaling_method() const;
+   const Tensor<UnscalingLayer::UnscalingMethod, 1> get_unscaling_method() const;
 
    Tensor<string, 1> write_unscaling_methods() const;
    Tensor<string, 1> write_unscaling_method_text() const;
@@ -72,18 +83,18 @@ public:
    void set();
    void set(const Index&);
    void set(const Tensor<Descriptives, 1>&);
-   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const UnscalingLayer&);
 
-   void set_inputs_number(const Index&) final;
-   void set_neurons_number(const Index&) final;
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
 
    virtual void set_default();
 
    // Output variables descriptives
 
    void set_descriptives(const Tensor<Descriptives, 1>&);
+   void set_descriptives_eigen(const Tensor<type, 2>&);
 
    void set_item_descriptives(const Index&, const Descriptives&);
 
@@ -96,35 +107,38 @@ public:
 
    // Outputs unscaling method
 
-   void set_scalers(const Tensor<Scaler,1>&);
-   void set_scalers(const string&);
-   void set_scalers(const Tensor<string, 1>&);
-   void set_scalers(const Scaler&);
+   void set_unscaling_methods(const Tensor<UnscalingMethod,1>&);
+   void set_unscaling_methods(const string&);
+   void set_unscaling_methods(const Tensor<string, 1>&);
+   void set_unscaling_methods(const UnscalingLayer::UnscalingMethod&);
 
    // Display messages
 
-   void set_display(const bool&);
+   void set_display(const bool&); 
 
    // Check methods
 
    bool is_empty() const;
   
-   void calculate_outputs(type*, const Tensor<Index, 1>&, type*, const Tensor<Index, 1>&) final;
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    void check_range(const Tensor<type, 1>&) const;
 
    // Serialization methods
 
-   void from_XML(const tinyxml2::XMLDocument&) final;
+   
 
-   void write_XML(tinyxml2::XMLPrinter&) const final;
+   
+   void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const final;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression_c() const final;
-   string write_expression_python() const final;
+   string write_expression_c() const;
+   string write_expression_python() const;
 
 
 protected:
@@ -137,7 +151,7 @@ protected:
 
    /// Unscaling method for the output variables.
 
-   Tensor<Scaler, 1> scalers;
+   Tensor<UnscalingMethod, 1> unscaling_methods;
 
    /// min and max range for unscaling
 
@@ -155,7 +169,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -171,3 +185,4 @@ protected:
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+

@@ -40,7 +40,7 @@
 #include "adaptive_moment_estimation.h"
 
 
-namespace opennn
+namespace OpenNN
 {
 
 /// This class represents the concept of training strategy for a neural network in OpenNN.
@@ -51,206 +51,214 @@ namespace opennn
 /// <li> Loss index.
 /// <li> Optimization algorithm.
 /// </ul> 
-
+   
 class TrainingStrategy
 {
 
 public:
 
-    // Constructors
+   // Constructors
 
     explicit TrainingStrategy();
 
     explicit TrainingStrategy(NeuralNetwork*, DataSet*);
 
-    // Enumerations
+   // Destructor
 
-    /// Enumeration of the available error terms in OpenNN.
+   virtual ~TrainingStrategy();
 
-    enum class LossMethod
+   // Enumerations
+
+    /// Enumeration of available error terms in OpenNN.
+
+    enum LossMethod
     {
-        SUM_SQUARED_ERROR,
-        MEAN_SQUARED_ERROR,
-        NORMALIZED_SQUARED_ERROR,
-        MINKOWSKI_ERROR,
-        WEIGHTED_SQUARED_ERROR,
-        CROSS_ENTROPY_ERROR
+       SUM_SQUARED_ERROR,
+       MEAN_SQUARED_ERROR,
+       NORMALIZED_SQUARED_ERROR,
+       MINKOWSKI_ERROR,
+       WEIGHTED_SQUARED_ERROR,
+       CROSS_ENTROPY_ERROR
     };
 
     /// Enumeration of all the available types of optimization algorithms.
 
-    enum class OptimizationMethod
+    enum OptimizationMethod
     {
-        GRADIENT_DESCENT,
-        CONJUGATE_GRADIENT,
-        QUASI_NEWTON_METHOD,
-        LEVENBERG_MARQUARDT_ALGORITHM,
-        STOCHASTIC_GRADIENT_DESCENT,
-        ADAPTIVE_MOMENT_ESTIMATION
+       GRADIENT_DESCENT,
+       CONJUGATE_GRADIENT,
+       QUASI_NEWTON_METHOD,
+       LEVENBERG_MARQUARDT_ALGORITHM,
+       STOCHASTIC_GRADIENT_DESCENT,
+       ADAPTIVE_MOMENT_ESTIMATION
     };
 
-    // Get methods
+   // Get methods
 
-    DataSet* get_data_set_pointer();
+   NeuralNetwork* get_neural_network_pointer() const;
 
-    NeuralNetwork* get_neural_network_pointer() const;
+   LossIndex* get_loss_index_pointer();
+   OptimizationAlgorithm* get_optimization_algorithm_pointer();
 
-    LossIndex* get_loss_index_pointer();
-    OptimizationAlgorithm* get_optimization_algorithm_pointer();
+   bool has_neural_network() const;
+   bool has_data_set() const;
 
-    bool has_neural_network() const;
-    bool has_data_set() const;
+   SumSquaredError* get_sum_squared_error_pointer();
+   MeanSquaredError* get_mean_squared_error_pointer();
+   NormalizedSquaredError* get_normalized_squared_error_pointer();
+   MinkowskiError* get_Minkowski_error_pointer();
+   CrossEntropyError* get_cross_entropy_error_pointer();
+   WeightedSquaredError* get_weighted_squared_error_pointer();
 
-    SumSquaredError* get_sum_squared_error_pointer();
-    MeanSquaredError* get_mean_squared_error_pointer();
-    NormalizedSquaredError* get_normalized_squared_error_pointer();
-    MinkowskiError* get_Minkowski_error_pointer();
-    CrossEntropyError* get_cross_entropy_error_pointer();
-    WeightedSquaredError* get_weighted_squared_error_pointer();
+   GradientDescent* get_gradient_descent_pointer();
+   ConjugateGradient* get_conjugate_gradient_pointer();
+   QuasiNewtonMethod* get_quasi_Newton_method_pointer();
+   LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer();
+   StochasticGradientDescent* get_stochastic_gradient_descent_pointer();
+   AdaptiveMomentEstimation* get_adaptive_moment_estimation_pointer();
 
-    GradientDescent* get_gradient_descent_pointer();
-    ConjugateGradient* get_conjugate_gradient_pointer();
-    QuasiNewtonMethod* get_quasi_Newton_method_pointer();
-    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer();
-    StochasticGradientDescent* get_stochastic_gradient_descent_pointer();
-    AdaptiveMomentEstimation* get_adaptive_moment_estimation_pointer();
+   const LossMethod& get_loss_method() const;
+   const OptimizationMethod& get_optimization_method() const;
 
-    const LossMethod& get_loss_method() const;
-    const OptimizationMethod& get_optimization_method() const;
+   string write_loss_method() const;
+   string write_optimization_method() const;
 
-    string write_loss_method() const;
-    string write_optimization_method() const;
+   string write_optimization_method_text() const;
+   string write_loss_method_text() const;
 
-    string write_optimization_method_text() const;
-    string write_loss_method_text() const;
+   const bool& get_display() const;
 
-    const bool& get_display() const;
+   // Set methods
 
-    // Set methods
+   void set();
+   void set_default();
 
-    void set();
-    void set(NeuralNetwork*, DataSet*);
-    void set_default() const;
+   void set_threads_number(const int&);
 
-    void set_threads_number(const int&);
+   void set_data_set_pointer(DataSet*);
+   void set_neural_network_pointer(NeuralNetwork*);
 
-    void set_data_set_pointer(DataSet*);
-    void set_neural_network_pointer(NeuralNetwork*);
+   void set_loss_index_threads_number(const int&);
+   void set_optimization_algorithm_threads_number(const int&);
 
-    void set_loss_index_threads_number(const int&);
-    void set_optimization_algorithm_threads_number(const int&);
+   void set_loss_index_pointer(LossIndex*);
+   void set_loss_index_data_set_pointer(DataSet*);
+   void set_loss_index_neural_network_pointer(NeuralNetwork*);
 
-    void set_loss_index_pointer(LossIndex*);
-    void set_loss_index_data_set_pointer(DataSet*);
-    void set_loss_index_neural_network_pointer(NeuralNetwork*);
+   void set_loss_method(const LossMethod&);
+   void set_optimization_method(const OptimizationMethod&);
 
-    void set_loss_method(const LossMethod&);
-    void set_optimization_method(const OptimizationMethod&);
+   void set_loss_method(const string&);
+   void set_optimization_method(const string&);
 
-    void set_loss_method(const string&);
-    void set_optimization_method(const string&);
+   void set_display(const bool&);
 
-    void set_display(const bool&);
+   void set_loss_goal(const type&);
+   void set_maximum_selection_error_increases(const Index&);
+   void set_reserve_selection_error_history(const bool&);
+   void set_maximum_epochs_number(const int&);
+   void set_display_period(const int&);
 
-    void set_loss_goal(const type&);
-    void set_maximum_selection_failures(const Index&);
-    void set_maximum_epochs_number(const int&);
-    void set_display_period(const int&);
+   void set_maximum_time(const type&);
 
-    void set_maximum_time(const type&);
+   // Training methods
 
-    // Training methods
+   // This method trains a neural network which has a loss index associated.
 
-    TrainingResults perform_training();
+   OptimizationAlgorithm::Results perform_training();
+   void perform_training_void();
 
+   // Check methods
 
-    // Check methods
+   bool check_forecasting() const;
 
-    void fix_forecasting();
+   // Serialization methods
 
-    // Serialization methods
+   void print() const;
 
-    void print() const;
+   void from_XML(const tinyxml2::XMLDocument&);
 
-    void from_XML(const tinyxml2::XMLDocument&);
-
-    void write_XML(tinyxml2::XMLPrinter&) const;
-
-    void save(const string&) const;
-    void load(const string&);
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   
+   void save(const string&) const;
+   void load(const string&);
 
 private:
 
-    DataSet* data_set_pointer = nullptr;
+   DataSet* data_set_pointer = nullptr;
 
-    NeuralNetwork* neural_network_pointer = nullptr;
+   NeuralNetwork* neural_network_pointer = nullptr;
 
-    // Loss index
+   // Loss index
 
-    /// Pointer to the sum squared error object wich can be used as the error term.
+   /// Pointer to the sum squared error object wich can be used as the error term.
 
-    SumSquaredError sum_squared_error;
+   SumSquaredError sum_squared_error;
 
-    /// Pointer to the mean squared error object wich can be used as the error term.
+   /// Pointer to the mean squared error object wich can be used as the error term.
 
-    MeanSquaredError mean_squared_error;
+   MeanSquaredError mean_squared_error;
 
-    /// Pointer to the normalized squared error object wich can be used as the error term.
+   /// Pointer to the normalized squared error object wich can be used as the error term.
 
-    NormalizedSquaredError normalized_squared_error;
+   NormalizedSquaredError normalized_squared_error;
 
-    /// Pointer to the Mikowski error object wich can be used as the error term.
+   /// Pointer to the Mikowski error object wich can be used as the error term.
 
-    MinkowskiError Minkowski_error;
+   MinkowskiError Minkowski_error;
 
-    /// Pointer to the cross-entropy error object wich can be used as the error term.
+   /// Pointer to the cross entropy error object wich can be used as the error term.
 
-    CrossEntropyError cross_entropy_error;
+   CrossEntropyError cross_entropy_error;
 
-    /// Pointer to the weighted squared error object wich can be used as the error term.
+   /// Pointer to the weighted squared error object wich can be used as the error term.
 
-    WeightedSquaredError weighted_squared_error;
+   WeightedSquaredError weighted_squared_error;
 
-    /// Type of loss method.
+   /// Type of loss method.
 
-    LossMethod loss_method;
+   LossMethod loss_method;
 
-    // Optimization algorithm
+   // Optimization algorithm
 
-    /// Gradient descent object to be used as a main optimization algorithm.
+   /// Gradient descent object to be used as a main optimization algorithm.
 
-    GradientDescent gradient_descent;
+   GradientDescent gradient_descent;
 
-    /// Conjugate gradient object to be used as a main optimization algorithm.
+   /// Conjugate gradient object to be used as a main optimization algorithm.
 
-    ConjugateGradient conjugate_gradient;
+   ConjugateGradient conjugate_gradient;
 
-    /// Quasi-Newton method object to be used as a main optimization algorithm.
+   /// Quasi-Newton method object to be used as a main optimization algorithm.
 
-    QuasiNewtonMethod quasi_Newton_method;
+   QuasiNewtonMethod quasi_Newton_method;
 
-    /// Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
+   /// Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
 
-    LevenbergMarquardtAlgorithm Levenberg_Marquardt_algorithm;
+   LevenbergMarquardtAlgorithm Levenberg_Marquardt_algorithm;
 
-    /// Stochastic gradient descent algorithm object to be used as a main optimization algorithm.
+   /// Stochastic gradient descent algorithm object to be used as a main optimization algorithm.
 
-    StochasticGradientDescent stochastic_gradient_descent;
+   StochasticGradientDescent stochastic_gradient_descent;
 
-    /// Adaptive moment estimation algorithm object to be used as a main optimization algorithm.
+   /// Adaptive moment estimation algorithm object to be used as a main optimization algorithm.
 
-    AdaptiveMomentEstimation adaptive_moment_estimation;
+   AdaptiveMomentEstimation adaptive_moment_estimation;
 
-    /// Type of main optimization algorithm.
+   /// Type of main optimization algorithm.
 
-    OptimizationMethod optimization_method;
+   OptimizationMethod optimization_method;
 
-    /// Display messages to screen.
+   /// Display messages to screen.
 
-    bool display = true;
+   bool display = true;
 
 #ifdef OPENNN_CUDA
-#include "../../opennn-cuda/opennn-cuda/training_strategy_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/training_strategy_cuda.h"
+#endif
+
+#ifdef OPENNN_MKL
+    #include "../../opennn-mkl/opennn_mkl/training_strategy_mkl.h"
 #endif
 
 };
@@ -261,7 +269,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

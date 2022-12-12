@@ -24,7 +24,7 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-namespace opennn
+namespace OpenNN
 {
 
 /// This class represents the mean squared error term.
@@ -45,43 +45,49 @@ public:
    
    explicit MeanSquaredError(NeuralNetwork*, DataSet*);
 
-   // Back propagation
+   // Destructor
 
-   void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagation&) const override;
+   virtual ~MeanSquaredError(); 
 
-   void calculate_output_delta(const DataSetBatch&,
-                               NeuralNetworkForwardPropagation&,
-                               LossIndexBackPropagation&) const final;
+   // Error methods
 
-   // Back propagation LM
+   void calculate_error(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        LossIndex::BackPropagation& back_propagation) const;
 
-   void calculate_error_lm(const DataSetBatch&,
-                           const NeuralNetworkForwardPropagation&,
-                           LossIndexBackPropagationLM&) const final;
+   void calculate_error_terms(const DataSet::Batch&,
+                              const NeuralNetwork::ForwardPropagation&,
+                              SecondOrderLoss&) const;
 
-   void calculate_output_delta_lm(const DataSetBatch&,
-                                  NeuralNetworkForwardPropagation&,
-                                  LossIndexBackPropagationLM&) const final;
+   // Gradient methods
 
-   void calculate_error_gradient_lm(const DataSetBatch&,
-                              LossIndexBackPropagationLM&) const final;
+   void calculate_output_gradient(const DataSet::Batch&,
+                                  const NeuralNetwork::ForwardPropagation&,
+                                  BackPropagation&) const;
 
-   void calculate_error_hessian_lm(const DataSetBatch&,
-                                        LossIndexBackPropagationLM&) const final;
+   void calculate_Jacobian_gradient(const DataSet::Batch&,
+                                    LossIndex::SecondOrderLoss&) const;
+
+   // Hessian method
+
+   void calculate_hessian_approximation(const DataSet::Batch& batch, LossIndex::SecondOrderLoss& second_order_loss) const;
 
    // Serialization methods
 
-   void write_XML(tinyxml2::XMLPrinter &) const final;
+      
 
-   string get_error_type() const final;
-   string get_error_type_text() const final;
+   void write_XML(tinyxml2::XMLPrinter &) const;
+
+   string get_error_type() const;
+   string get_error_type_text() const;
 
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn-cuda/mean_squared_error_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/mean_squared_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../../opennn-mkl/opennn_mkl/mean_squared_error_mkl.h"
+#endif
 };
 
 }
@@ -90,7 +96,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
