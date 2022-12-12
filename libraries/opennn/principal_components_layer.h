@@ -25,7 +25,7 @@
 
 #include "layer.h"
 
-namespace opennn
+namespace OpenNN
 {
 
 /// This class represents the layer of principal component analysis.

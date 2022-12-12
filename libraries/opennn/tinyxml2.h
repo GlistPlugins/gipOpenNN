@@ -463,7 +463,7 @@ private:
 // 	false, <b>no children of this node or its siblings</b> will be visited.
 //
 // 	All flavors of Visit methods have a default implementation that returns 'true'(continue
-// 	visiting). You need to only final methods that are interesting to you.
+// 	visiting). You need to only override methods that are interesting to you.
 //
 // 	Generally Accept() is called on the XMLDocument, although all nodes support visiting.
 //
@@ -477,37 +477,37 @@ public:
     virtual ~XMLVisitor() {}
 
     /// Visit a document.
-    virtual bool VisitEnter(const XMLDocument&)			{
+    virtual bool VisitEnter(const XMLDocument& /*doc*/)			{
         return true;
     }
     /// Visit a document.
-    virtual bool VisitExit(const XMLDocument&)			{
+    virtual bool VisitExit(const XMLDocument& /*doc*/)			{
         return true;
     }
 
     /// Visit an element.
-    virtual bool VisitEnter(const XMLElement&, const XMLAttribute*)	{
+    virtual bool VisitEnter(const XMLElement& /*element*/, const XMLAttribute* /*firstAttribute*/)	{
         return true;
     }
     /// Visit an element.
-    virtual bool VisitExit(const XMLElement&)			{
+    virtual bool VisitExit(const XMLElement& /*element*/)			{
         return true;
     }
 
     /// Visit a declaration.
-    virtual bool Visit(const XMLDeclaration&)		{
+    virtual bool Visit(const XMLDeclaration& /*declaration*/)		{
         return true;
     }
     /// Visit a text node.
-    virtual bool Visit(const XMLText&)					{
+    virtual bool Visit(const XMLText& /*text*/)					{
         return true;
     }
     /// Visit a comment node.
-    virtual bool Visit(const XMLComment&)				{
+    virtual bool Visit(const XMLComment& /*comment*/)				{
         return true;
     }
     /// Visit an unknown node.
-    virtual bool Visit(const XMLUnknown&)				{
+    virtual bool Visit(const XMLUnknown& /*unknown*/)				{
         return true;
     }
 };
@@ -1857,10 +1857,10 @@ public:
 	// internal
 	void MarkInUse(XMLNode*);
 
-    virtual XMLNode* ShallowClone(XMLDocument*) const	{
+    virtual XMLNode* ShallowClone(XMLDocument* /*document*/) const	{
         return nullptr;
     }
-    virtual bool ShallowEqual(const XMLNode*) const	{
+    virtual bool ShallowEqual(const XMLNode* /*compare*/) const	{
         return false;
     }
 
@@ -2199,8 +2199,8 @@ public:
     void PushDeclaration(const char* value );
     void PushUnknown(const char* value );
 
-    virtual bool VisitEnter(const XMLDocument&);
-    virtual bool VisitExit(const XMLDocument&)			{
+    virtual bool VisitEnter(const XMLDocument& /*doc*/);
+    virtual bool VisitExit(const XMLDocument& /*doc*/)			{
         return true;
     }
 
@@ -2240,8 +2240,8 @@ public:
 protected:
 	virtual bool CompactMode(const XMLElement&)	{ return _compactMode; }
 
-// 	 Prints out the space before an element. You may final to change
-// 	    the space and tabs used. A PrintSpace() final should call Print().
+// 	 Prints out the space before an element. You may override to change
+// 	    the space and tabs used. A PrintSpace() override should call Print().
 
     virtual void PrintSpace(int depth );
     void Print(const char* format, ...);

@@ -10,7 +10,8 @@
 #define OPENNN_H
 
 #include "config.h"
-#include "half.hpp"
+
+#include "statistics.h"
 
 // Data set
 
@@ -29,7 +30,6 @@
 #include "probabilistic_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
-#include "flatten_layer.h"
 #include "neural_network.h"
 
 // Training strategy
@@ -57,6 +57,7 @@
 #include "growing_neurons.h"
 #include "inputs_selection.h"
 #include "growing_inputs.h"
+#include "pruning_inputs.h"
 #include "genetic_algorithm.h"
 
 // Testing analysis
@@ -68,19 +69,13 @@
 #include "numerical_differentiation.h"
 #include "correlations.h"
 #include "response_optimization.h"
-#include "opennn_strings.h"
-#include "tensor_utilities.h"
 #include "statistics.h"
-#include "scaling.h"
-#include "region_based_object_detector.h"
-#include "json_to_xml.h"
-#include "text_analytics.h"
-#include "codification.h"
+#include "opennn_strings.h"
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2022 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public
