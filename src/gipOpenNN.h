@@ -8,12 +8,12 @@
 #ifndef SRC_GIPOPENNN_H_
 #define SRC_GIPOPENNN_H_
 
-#include "gBasePlugin.h"
+#include "gBaseComponent.h"
 #include "opennn.h"
 #include "optimization_algorithm.h"
 
 
-class gipOpenNN : public gBasePlugin{
+class gipOpenNN : public gBaseComponent {
 public:
 
 	typedef Eigen::Index Index;
