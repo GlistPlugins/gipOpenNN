@@ -53,6 +53,9 @@ public:
 	void performBinaryClassificationTest();
 	void performConfusionTest();
 
+	const Tensor<float, 2> calculateOutputs(Tensor<float, 2>& inputs);
+	const Tensor<std::string, 1> getOutputNames();
+
 	void saveOutputs(const Tensor<float, 2>& inputs, std::string csvFilename);
 	void saveDataset(std::string xmlFilename);
 	void saveNeuralNetwork(std::string xmlFilename);
