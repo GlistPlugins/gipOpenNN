@@ -42,8 +42,8 @@ public:
 	gipOpenNN();
 	virtual ~gipOpenNN();
 
-	void loadDataset(std::string datasetPath, char delimiter, bool hasColumnNames);
-	void loadDatasetFile(std::string datasetFilePath, char delimiter, bool hasColumnNames);
+	void loadDataset(std::string datasetFullPath, char delimiter, bool hasColumnNames);
+	void loadDatasetFile(std::string datasetFileName, char delimiter, bool hasColumnNames);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
 
 	void createTrainingStrategy();
