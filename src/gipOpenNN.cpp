@@ -54,6 +54,14 @@ void gipOpenNN::performConfusionTest() {
 	confusion = testinganalysis->calculate_confusion();
 }
 
+const Tensor<float, 2> gipOpenNN::calculateOutputs(Tensor<float, 2>& inputs) {
+	return neuralnetwork->calculate_outputs(inputs);
+}
+
+const Tensor<std::string, 1> gipOpenNN::getOutputNames() {
+	return neuralnetwork->get_outputs_names();
+}
+
 void gipOpenNN::saveOutputs(const gipOpenNN::Tensor<float, 2>& inputs, std::string csvFilename) {
 	neuralnetwork->save_outputs(inputs, gGetFilesDir() + csvFilename);
 }
