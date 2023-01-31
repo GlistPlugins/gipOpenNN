@@ -9,13 +9,17 @@
 
 
 gipOpenNN::gipOpenNN() {
+	dataset = nullptr;
+	neuralnetwork = nullptr;
+	trainingstrategy = nullptr;
+	testinganalysis = nullptr;
 }
 
 gipOpenNN::~gipOpenNN() {
-	delete testinganalysis;
-	delete trainingstrategy;
-	delete neuralnetwork;
-	delete dataset;
+	if(testinganalysis) delete testinganalysis;
+	if(trainingstrategy) delete trainingstrategy;
+	if(neuralnetwork) delete neuralnetwork;
+	if(dataset) delete dataset;
 }
 
 void gipOpenNN::loadDataset(std::string datasetPath, char delimiter, bool hasColumnNames) {
