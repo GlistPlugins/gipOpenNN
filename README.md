@@ -1,5 +1,5 @@
 # gipOpenNN
-GlistEngine plugin to implement artificial intelligence and neural network functionalities using OpenNN.
+GlistEngine component to implement artificial intelligence and neural network functionalities using OpenNN.
 
 ## Installation
 Fork & clone this project into ~/dev/glist/glistplugins
