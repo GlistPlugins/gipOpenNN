@@ -1,7 +1,7 @@
 /*
  * gipOpenNN.h
  *
- *  Created on: 12 A�u 2021
+ *  Created on: 12 Aug 2021
  *      Author: oznur
  */
 
