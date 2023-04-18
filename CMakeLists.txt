@@ -89,16 +89,17 @@ endif(WIN32)
 ##### PLUGIN DEPENDENCY LINKING (IF ANY) #####					
 if(WIN32)
 	list(APPEND PLUGIN_LINKLIBS
-				gomp
+				omp
 				#Lib names
 	)
 elseif(LINUX)
 	list(APPEND PLUGIN_LINKLIBS
 				#Lib names
-				gomp
+				omp
 	)
 elseif(APPLE)
 	list(APPEND PLUGIN_LINKLIBS
 				#Lib names
+				omp
 	)
 endif(WIN32)
