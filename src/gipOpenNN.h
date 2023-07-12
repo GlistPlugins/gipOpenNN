@@ -45,6 +45,7 @@ public:
 	void loadDataset(std::string datasetFullPath, char delimiter, bool hasColumnNames);
 	void loadDatasetFile(std::string datasetFileName, char delimiter, bool hasColumnNames);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
+	void createNeuralNetwork(const NeuralNetwork::ProjectType&, int hiddenNeuronNum);
 
 	void createTrainingStrategy();
 	void performTraining();
