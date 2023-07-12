@@ -46,6 +46,7 @@ public:
 	void loadDatasetFile(std::string datasetFileName, char delimiter, bool hasColumnNames);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, int hiddenNeuronNum);
+	void createNeuralNetwork(const NeuralNetwork::ProjectType&, std::vector<int> hiddenNeuronNums);
 
 	void createTrainingStrategy();
 	void performTraining();
@@ -64,7 +65,7 @@ public:
 	void saveTestingAnalysis(std::string xmlFilename);
 	void saveExpression(std::string cppFilename);
 
-	gipOpenNN::DataSet* getDataset();
+        gipOpenNN::DataSet* getDataset();
 	gipOpenNN::NeuralNetwork* getNeuralNetwork();
 	gipOpenNN::TrainingStrategy* getTrainingStrategy();
 	gipOpenNN::OptimizationAlgorithm::Results* getTrainingResults();
