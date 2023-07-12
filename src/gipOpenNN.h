@@ -34,6 +34,7 @@ public:
 	typedef OpenNN::LossIndex LossIndex;
 	typedef OpenNN::ConjugateGradient ConjugateGradient;
 	typedef OpenNN::QuasiNewtonMethod QuasiNewtonMethod;
+        typedef OpenNN::LevenbergMarquardtAlgorithm LevenbergMarquardtAlgorithm;
 
 	template<typename Scalar_, int NumIndices_>
 	using Tensor = Eigen::Tensor<Scalar_, NumIndices_>;
