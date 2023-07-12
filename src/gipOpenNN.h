@@ -65,7 +65,10 @@ public:
 	void saveTestingAnalysis(std::string xmlFilename);
 	void saveExpression(std::string cppFilename);
 
-        gipOpenNN::DataSet* getDataset();
+        void scaleInputs();
+        void unscaleTargets();
+
+	gipOpenNN::DataSet* getDataset();
 	gipOpenNN::NeuralNetwork* getNeuralNetwork();
 	gipOpenNN::TrainingStrategy* getTrainingStrategy();
 	gipOpenNN::OptimizationAlgorithm::Results* getTrainingResults();
