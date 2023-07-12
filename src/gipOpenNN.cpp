@@ -32,6 +32,15 @@ void gipOpenNN::loadDatasetFile(std::string datasetFileName, char delimiter, boo
 
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, const Tensor<Index, 1>& tensor) {
 	neuralnetwork = new NeuralNetwork(projectType, tensor);
+	neuralnetwork->set_inputs_names(dataset->get_input_variables_names());
+        createTrainingStrategy();
+        createTestingAnalysis();
+}
+
+void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, int hiddenNeuronNum) {
+	Tensor<Index, 1> architecture(3);
+	architecture.setValues({dataset->get_input_variables_number(), hiddenNeuronNum, dataset->get_target_variables_number()});
+	createNeuralNetwork(projectType, architecture);
 }
 
 void gipOpenNN::createTrainingStrategy() {
