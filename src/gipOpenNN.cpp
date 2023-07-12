@@ -33,6 +33,8 @@ void gipOpenNN::loadDatasetFile(std::string datasetFileName, char delimiter, boo
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, const Tensor<Index, 1>& tensor) {
 	neuralnetwork = new NeuralNetwork(projectType, tensor);
 	neuralnetwork->set_inputs_names(dataset->get_input_variables_names());
+        //scaleInputs();
+        //unscaleTargets();
         createTrainingStrategy();
         createTestingAnalysis();
 }
@@ -41,6 +43,15 @@ void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectTyp
 	Tensor<Index, 1> architecture(3);
 	architecture.setValues({dataset->get_input_variables_number(), hiddenNeuronNum, dataset->get_target_variables_number()});
 	createNeuralNetwork(projectType, architecture);
+}
+
+void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, std::vector<int> hiddenNeuronNums) {
+        int perceptronlayernum = hiddenNeuronNums.size();
+        Tensor<Index, 1> architecture(perceptronlayernum + 2);
+        architecture(0) = dataset->get_input_variables_number();
+        architecture(architecture.size() - 1) = dataset->get_target_variables_number();
+        for(int i = 0; i < perceptronlayernum; i++) architecture(i + 1) = hiddenNeuronNums[i];
+        createNeuralNetwork(projectType, architecture);
 }
 
 void gipOpenNN::createTrainingStrategy() {
@@ -95,6 +106,25 @@ void gipOpenNN::saveExpression(std::string cppFilename) {
 	neuralnetwork->save_expression_c(gGetFilesDir() + cppFilename);
 }
 
+void gipOpenNN::scaleInputs() {
+        const Index inputnum = dataset->get_input_variables_number();
+        Tensor<std::string, 1> scalingmethod(inputnum);
+        scalingmethod.setConstant("MeanStandardDeviation");
+        Tensor<Descriptives, 1> inputdes = getDataset()->scale_input_variables(scalingmethod);
+        ScalingLayer* sl = getNeuralNetwork()->get_scaling_layer_pointer();
+        sl->set_descriptives(inputdes);
+        sl->set_scaling_methods("MeanStandardDeviation");
+}
+
+void gipOpenNN::unscaleTargets() {
+        const Index targetnum = dataset->get_target_variables_number();
+        Tensor<std::string, 1> unscalingmethod(targetnum);
+        unscalingmethod.setConstant("MeanStandardDeviation");
+        Tensor<Descriptives, 1> targetdes = getDataset()->scale_target_variables(unscalingmethod);
+        UnscalingLayer* ul = getNeuralNetwork()->get_unscaling_layer_pointer();
+        ul->set_descriptives(targetdes);
+        ul->set_unscaling_methods("MeanStandardDeviation");
+}
 
 gipOpenNN::DataSet* gipOpenNN::getDataset() {
 	return dataset;

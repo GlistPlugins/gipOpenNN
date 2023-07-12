@@ -34,6 +34,7 @@ public:
 	typedef OpenNN::LossIndex LossIndex;
 	typedef OpenNN::ConjugateGradient ConjugateGradient;
 	typedef OpenNN::QuasiNewtonMethod QuasiNewtonMethod;
+        typedef OpenNN::LevenbergMarquardtAlgorithm LevenbergMarquardtAlgorithm;
 
 	template<typename Scalar_, int NumIndices_>
 	using Tensor = Eigen::Tensor<Scalar_, NumIndices_>;
@@ -46,6 +47,7 @@ public:
 	void loadDatasetFile(std::string datasetFileName, char delimiter, bool hasColumnNames);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, int hiddenNeuronNum);
+	void createNeuralNetwork(const NeuralNetwork::ProjectType&, std::vector<int> hiddenNeuronNums);
 
 	void createTrainingStrategy();
 	void performTraining();
@@ -63,6 +65,9 @@ public:
 	void saveTrainingStrategy(std::string xmlFilename);
 	void saveTestingAnalysis(std::string xmlFilename);
 	void saveExpression(std::string cppFilename);
+
+        void scaleInputs();
+        void unscaleTargets();
 
 	gipOpenNN::DataSet* getDataset();
 	gipOpenNN::NeuralNetwork* getNeuralNetwork();
