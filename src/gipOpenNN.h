@@ -3,6 +3,7 @@
  *
  *  Created on: 12 Aug 2021
  *      Author: oznur
+ *      Hardly edited by: Noyan
  */
 
 #ifndef SRC_GIPOPENNN_H_
@@ -34,7 +35,7 @@ public:
 	typedef OpenNN::LossIndex LossIndex;
 	typedef OpenNN::ConjugateGradient ConjugateGradient;
 	typedef OpenNN::QuasiNewtonMethod QuasiNewtonMethod;
-        typedef OpenNN::LevenbergMarquardtAlgorithm LevenbergMarquardtAlgorithm;
+    typedef OpenNN::LevenbergMarquardtAlgorithm LevenbergMarquardtAlgorithm;
 
 	template<typename Scalar_, int NumIndices_>
 	using Tensor = Eigen::Tensor<Scalar_, NumIndices_>;
@@ -66,8 +67,8 @@ public:
 	void saveTestingAnalysis(std::string xmlFilename);
 	void saveExpression(std::string cppFilename);
 
-        void scaleInputs();
-        void unscaleTargets();
+	void scaleInputs();
+	void unscaleTargets();
 
 	gipOpenNN::DataSet* getDataset();
 	gipOpenNN::NeuralNetwork* getNeuralNetwork();
