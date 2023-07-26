@@ -33,10 +33,10 @@ void gipOpenNN::loadDatasetFile(std::string datasetFileName, char delimiter, boo
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, const Tensor<Index, 1>& tensor) {
 	neuralnetwork = new NeuralNetwork(projectType, tensor);
 	neuralnetwork->set_inputs_names(dataset->get_input_variables_names());
-        //scaleInputs();
-        //unscaleTargets();
-        createTrainingStrategy();
-        createTestingAnalysis();
+	//scaleInputs();
+	//unscaleTargets();
+	createTrainingStrategy();
+	createTestingAnalysis();
 }
 
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, int hiddenNeuronNum) {
