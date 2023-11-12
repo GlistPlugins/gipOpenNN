@@ -173,6 +173,17 @@ public:
 
        /// Checks that the points A, U and B define a minimum.
        /// That is, a < u < b, fa > fu and fu < fb.
+       /// If some of that conditions is not satisfied, it will throw an exception.
+       /// Prefer checkBool function
+
+       void check() const {
+           if (!checkBool()) {
+             throw logic_error("check failed");
+           }
+       }
+
+       /// Checks that the points A, U and B define a minimum.
+       /// That is, a < u < b, fa > fu and fu < fb.
        /// If some of that conditions is not satisfied, it will return false.
 
        inline bool checkBool() const
