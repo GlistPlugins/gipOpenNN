@@ -1042,8 +1042,9 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
         Tensor<Index, 2> batches(batches_number, batch_size);
 
         // Shuffle
-
-        random_shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size());
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(samples_copy.data(), samples_copy.data() + samples_copy.size(), g);
 
         for(Index i = 0; i < batch_size; i++)
             batches(0,i) = samples_copy(i);
@@ -1121,7 +1122,9 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
 
             if(i == batches_number-1)
             {
-                random_shuffle(buffer.data(), buffer.data() +  buffer.size());
+                std::random_device rd;
+                std::mt19937 g(rd());
+                std::shuffle(buffer.data(), buffer.data() +  buffer.size(), g);
 
                 if(batch_size <= buffer_size)
                 {
@@ -1550,7 +1553,9 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     initialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
 
-    random_shuffle(indices.data(), indices.data() + indices.size());
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(indices.data(), indices.data() + indices.size(), g);
 
     Index count = 0;
 
@@ -11354,7 +11359,9 @@ void DataSet::shuffle()
 
     for(Index i = 0; i < data_rows; i++) indices(i) = i;
 
-    random_shuffle(&indices(0), &indices(data_rows-1));
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(&indices(0), &indices(data_rows-1), g);
 
     Tensor<type, 2> new_data(data_rows, data_columns);
     Tensor<string, 1> new_rows_labels(data_rows);

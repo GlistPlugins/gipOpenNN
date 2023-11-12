@@ -325,16 +325,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
                                                    back_propagation,
                                                    optimization_data);
 
-    try
-    {
-        triplet.check();
-    }
-    catch(const logic_error& error)
-    {
-        //cout << "Triplet bracketing" << endl;
-
-        //cout << error.what() << endl;
-
+    if (!triplet.checkBool()) {
         return triplet.minimum();
     }
 
@@ -417,16 +408,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
         // Check triplet
 
-        try
-        {
-            triplet.check();
-        }
-        catch(const logic_error& error)
-        {
-            //cout << "Triplet reduction" << endl;
-
-            //cout << error.what() << endl;
-
+        if (!triplet.checkBool()) {
             return triplet.minimum();
         }
     }
@@ -557,7 +539,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     triplet.A.first = 0;
     triplet.A.second = loss;
 
-    // Right point       
+    // Right point
 
     Index count = 0;
 
