@@ -173,9 +173,9 @@ public:
 
        /// Checks that the points A, U and B define a minimum.
        /// That is, a < u < b, fa > fu and fu < fb.
-       /// If some of that conditions is not satisfied, an exception is thrown.
+       /// If some of that conditions is not satisfied, it will return false.
 
-       inline void check() const
+       inline bool checkBool() const
        {
            ostringstream buffer;
 
@@ -186,7 +186,8 @@ public:
                      << "U is less than A:\n"
                      << struct_to_string();
 
-              throw logic_error(buffer.str());
+              //throw logic_error(buffer.str());
+              return false;
            }
 
            if(U.first > B.first)
@@ -196,7 +197,8 @@ public:
                      << "U is greater than A:\n"
                      << struct_to_string();
 
-              throw logic_error(buffer.str());
+              //throw logic_error(buffer.str());
+              return false;
            }
 
            if(U.second >= A.second)
@@ -206,7 +208,8 @@ public:
                      << "fU is equal or greater than fA:\n"
                      << struct_to_string();
 
-              throw logic_error(buffer.str());
+              //throw logic_error(buffer.str());
+              return false;
            }
 
            if(U.second >= B.second)
@@ -216,8 +219,10 @@ public:
                      << "fU is equal or greater than fB:\n"
                      << struct_to_string();
 
-              throw logic_error(buffer.str());
+              //throw logic_error(buffer.str());
+              return false;
            }
+           return true;
        }
 
        /// Left point of the triplet.
