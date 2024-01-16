@@ -94,6 +94,12 @@ void gipOpenNN::saveNeuralNetwork(std::string xmlFilename) {
 	neuralnetwork->save(gGetFilesDir() + xmlFilename);
 }
 
+void gipOpenNN::loadNeuralNetwork(std::string xmlFilename) {
+	if(neuralnetwork != nullptr) delete neuralnetwork;
+	neuralnetwork = new NeuralNetwork();
+	neuralnetwork->load(gGetFilesDir() + xmlFilename);
+}
+
 void gipOpenNN::saveTrainingStrategy(std::string xmlFilename) {
 	trainingstrategy->save(gGetFilesDir() + xmlFilename);
 }
