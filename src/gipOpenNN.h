@@ -63,6 +63,7 @@ public:
 	void saveOutputs(const Tensor<float, 2>& inputs, std::string csvFilename);
 	void saveDataset(std::string xmlFilename);
 	void saveNeuralNetwork(std::string xmlFilename);
+	void loadNeuralNetwork(std::string xmlFilename);
 	void saveTrainingStrategy(std::string xmlFilename);
 	void saveTestingAnalysis(std::string xmlFilename);
 	void saveExpression(std::string cppFilename);
