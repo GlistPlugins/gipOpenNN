@@ -46,6 +46,7 @@ public:
 
 	void loadDataset(std::string datasetFullPath, char delimiter, bool hasColumnNames);
 	void loadDatasetFile(std::string datasetFileName, char delimiter, bool hasColumnNames);
+	void setDataset(DataSet& ds);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, int hiddenNeuronNum);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, std::vector<int> hiddenNeuronNums);
@@ -63,7 +64,9 @@ public:
 	void saveOutputs(const Tensor<float, 2>& inputs, std::string csvFilename);
 	void saveDataset(std::string xmlFilename);
 	void saveNeuralNetwork(std::string xmlFilename);
+	void saveNeuralNetworkFile(std::string xmlFilename);
 	void loadNeuralNetwork(std::string xmlFilename);
+	void loadNeuralNetworkFile(std::string xmlFilename);
 	void saveTrainingStrategy(std::string xmlFilename);
 	void saveTestingAnalysis(std::string xmlFilename);
 	void saveExpression(std::string cppFilename);
