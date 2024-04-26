@@ -42,13 +42,11 @@ endif(WIN32)
 ##### PLUGIN DEPENDENCY LINKING (IF ANY) #####					
 if(WIN32)
 	list(APPEND PLUGIN_LINKLIBS
-				omp
 				#Lib names
 	)
 elseif(LINUX)
 	list(APPEND PLUGIN_LINKLIBS
 				#Lib names
-				omp
 	)
 elseif(APPLE)
 	find_package(OpenMP REQUIRED)
@@ -118,8 +116,7 @@ add_library(OpenNN SHARED
 )
 
 if(DEFINED WIN32 OR DEFINED LINUX)
-	target_link_libraries(
-			OpenNN PRIVATE
+	target_link_libraries(OpenNN PUBLIC
 			omp
 	)
 endif()
