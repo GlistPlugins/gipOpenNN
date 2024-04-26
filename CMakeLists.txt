@@ -117,6 +117,13 @@ add_library(OpenNN SHARED
 		${OPENNN_SRC}
 )
 
+if(DEFINED WIN32 OR DEFINED LINUX)
+	target_link_libraries(
+			OpenNN PRIVATE
+			omp
+	)
+endif()
+
 # Link headers to the library
 target_include_directories(OpenNN PUBLIC
 		${OPENNN_INCLUDE}
