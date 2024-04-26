@@ -12,59 +12,12 @@ set(PREBUILT_DIR ${PLUGIN_DIR}/prebuilts)
 ##### PLUGIN SOURCES #####
 list(APPEND PLUGIN_SRCS
 			${PLUGIN_DIR}/src/gipOpenNN.cpp
-			${PLUGIN_DIR}/libraries/opennn/adaptive_moment_estimation.cpp
-			${PLUGIN_DIR}/libraries/opennn/bounding_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/conjugate_gradient.cpp
-			${PLUGIN_DIR}/libraries/opennn/convolutional_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/correlations.cpp
-			${PLUGIN_DIR}/libraries/opennn/cross_entropy_error.cpp
-			${PLUGIN_DIR}/libraries/opennn/data_set.cpp
-			${PLUGIN_DIR}/libraries/opennn/genetic_algorithm.cpp
-			${PLUGIN_DIR}/libraries/opennn/gradient_descent.cpp
-			${PLUGIN_DIR}/libraries/opennn/growing_inputs.cpp
-			${PLUGIN_DIR}/libraries/opennn/growing_neurons.cpp
-			${PLUGIN_DIR}/libraries/opennn/inputs_selection.cpp
-			${PLUGIN_DIR}/libraries/opennn/layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/learning_rate_algorithm.cpp
-			${PLUGIN_DIR}/libraries/opennn/levenberg_marquardt_algorithm.cpp
-			${PLUGIN_DIR}/libraries/opennn/long_short_term_memory_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/loss_index.cpp
-			${PLUGIN_DIR}/libraries/opennn/mean_squared_error.cpp
-			${PLUGIN_DIR}/libraries/opennn/minkowski_error.cpp
-			${PLUGIN_DIR}/libraries/opennn/model_selection.cpp
-			${PLUGIN_DIR}/libraries/opennn/neural_network.cpp
-			${PLUGIN_DIR}/libraries/opennn/neurons_selection.cpp
-			${PLUGIN_DIR}/libraries/opennn/normalized_squared_error.cpp
-			${PLUGIN_DIR}/libraries/opennn/numerical_differentiation.cpp
-			${PLUGIN_DIR}/libraries/opennn/opennn_strings.cpp
-			${PLUGIN_DIR}/libraries/opennn/optimization_algorithm.cpp
-			${PLUGIN_DIR}/libraries/opennn/perceptron_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/pooling_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/principal_components_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/probabilistic_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/pruning_inputs.cpp
-			${PLUGIN_DIR}/libraries/opennn/quasi_newton_method.cpp
-			${PLUGIN_DIR}/libraries/opennn/recurrent_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/response_optimization.cpp
-			${PLUGIN_DIR}/libraries/opennn/scaling_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/statistics.cpp
-			${PLUGIN_DIR}/libraries/opennn/stochastic_gradient_descent.cpp
-			${PLUGIN_DIR}/libraries/opennn/sum_squared_error.cpp
-			${PLUGIN_DIR}/libraries/opennn/testing_analysis.cpp
-			${PLUGIN_DIR}/libraries/opennn/tinyxml2.cpp
-			${PLUGIN_DIR}/libraries/opennn/training_strategy.cpp
-			${PLUGIN_DIR}/libraries/opennn/unit_testing.cpp
-			${PLUGIN_DIR}/libraries/opennn/unscaling_layer.cpp
-			${PLUGIN_DIR}/libraries/opennn/weighted_squared_error.cpp
 )
-
 
 ##### PLUGIN HEADERS #####
 list(APPEND PLUGIN_INCLUDES
 			${PLUGIN_DIR}/src
-			${PLUGIN_DIR}/libraries/opennn
 			${PLUGIN_DIR}/libraries/eigen/Eigen/src
-	
 )
 
 
@@ -103,3 +56,78 @@ elseif(APPLE)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 	endif()
 endif(WIN32)
+
+# OpenNN
+
+# Generates a dynamic library with the OpenNN library and links it
+
+# Define src and headers
+set(OPENNN_SRC
+		${PLUGIN_DIR}/libraries/opennn/adaptive_moment_estimation.cpp
+		${PLUGIN_DIR}/libraries/opennn/bounding_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/conjugate_gradient.cpp
+		${PLUGIN_DIR}/libraries/opennn/convolutional_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/correlations.cpp
+		${PLUGIN_DIR}/libraries/opennn/cross_entropy_error.cpp
+		${PLUGIN_DIR}/libraries/opennn/data_set.cpp
+		${PLUGIN_DIR}/libraries/opennn/genetic_algorithm.cpp
+		${PLUGIN_DIR}/libraries/opennn/gradient_descent.cpp
+		${PLUGIN_DIR}/libraries/opennn/growing_inputs.cpp
+		${PLUGIN_DIR}/libraries/opennn/growing_neurons.cpp
+		${PLUGIN_DIR}/libraries/opennn/inputs_selection.cpp
+		${PLUGIN_DIR}/libraries/opennn/layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/learning_rate_algorithm.cpp
+		${PLUGIN_DIR}/libraries/opennn/levenberg_marquardt_algorithm.cpp
+		${PLUGIN_DIR}/libraries/opennn/long_short_term_memory_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/loss_index.cpp
+		${PLUGIN_DIR}/libraries/opennn/mean_squared_error.cpp
+		${PLUGIN_DIR}/libraries/opennn/minkowski_error.cpp
+		${PLUGIN_DIR}/libraries/opennn/model_selection.cpp
+		${PLUGIN_DIR}/libraries/opennn/neural_network.cpp
+		${PLUGIN_DIR}/libraries/opennn/neurons_selection.cpp
+		${PLUGIN_DIR}/libraries/opennn/normalized_squared_error.cpp
+		${PLUGIN_DIR}/libraries/opennn/numerical_differentiation.cpp
+		${PLUGIN_DIR}/libraries/opennn/opennn_strings.cpp
+		${PLUGIN_DIR}/libraries/opennn/optimization_algorithm.cpp
+		${PLUGIN_DIR}/libraries/opennn/perceptron_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/pooling_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/principal_components_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/probabilistic_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/pruning_inputs.cpp
+		${PLUGIN_DIR}/libraries/opennn/quasi_newton_method.cpp
+		${PLUGIN_DIR}/libraries/opennn/recurrent_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/response_optimization.cpp
+		${PLUGIN_DIR}/libraries/opennn/scaling_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/statistics.cpp
+		${PLUGIN_DIR}/libraries/opennn/stochastic_gradient_descent.cpp
+		${PLUGIN_DIR}/libraries/opennn/sum_squared_error.cpp
+		${PLUGIN_DIR}/libraries/opennn/testing_analysis.cpp
+		${PLUGIN_DIR}/libraries/opennn/tinyxml2.cpp
+		${PLUGIN_DIR}/libraries/opennn/training_strategy.cpp
+		${PLUGIN_DIR}/libraries/opennn/unit_testing.cpp
+		${PLUGIN_DIR}/libraries/opennn/unscaling_layer.cpp
+		${PLUGIN_DIR}/libraries/opennn/weighted_squared_error.cpp)
+
+set(OPENNN_INCLUDE
+		${PLUGIN_DIR}/libraries/opennn
+)
+
+# Create a shared library
+add_library(OpenNN SHARED
+		${OPENNN_SRC}
+)
+
+# Link headers to the library
+target_include_directories(OpenNN PUBLIC
+		${OPENNN_INCLUDE}
+)
+
+# Append OpenNN includes to the plugin includes
+list(APPEND PLUGIN_INCLUDES
+		${OPENNN_INCLUDE}
+)
+
+# Append OpenNN library to the plugin libraries
+list(APPEND PLUGIN_LINKLIBS
+		OpenNN
+)
