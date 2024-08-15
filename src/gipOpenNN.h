@@ -50,6 +50,7 @@ public:
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, const Tensor<Index, 1>&);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, int hiddenNeuronNum);
 	void createNeuralNetwork(const NeuralNetwork::ProjectType&, std::vector<int> hiddenNeuronNums);
+	void createNeuralNetwork(const NeuralNetwork::ProjectType&, std::vector<uint32_t> hiddenNeuronNums);
 
 	void createTrainingStrategy();
 	void performTraining();

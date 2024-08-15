@@ -16,14 +16,14 @@ gipOpenNN::gipOpenNN() {
 }
 
 gipOpenNN::~gipOpenNN() {
-	if(testinganalysis) delete testinganalysis;
-	if(trainingstrategy) delete trainingstrategy;
-	if(neuralnetwork) delete neuralnetwork;
-	if(dataset) delete dataset;
+	delete testinganalysis;
+	delete trainingstrategy;
+	delete neuralnetwork;
+	delete dataset;
 }
 
 void gipOpenNN::loadDataset(std::string datasetFullPath, char delimiter, bool hasColumnNames) {
-	if(dataset != nullptr) delete dataset;
+	delete dataset;
 	dataset = new DataSet(datasetFullPath, delimiter, hasColumnNames);
 }
 
@@ -32,7 +32,7 @@ void gipOpenNN::loadDatasetFile(std::string datasetFileName, char delimiter, boo
 }
 
 void gipOpenNN::setDataset(DataSet& ds) {
-	if(dataset != nullptr) delete dataset;
+	delete dataset;
 	dataset = new DataSet();
 	dataset->set(ds);
 	dataset->set_columns_uses(ds.get_columns_uses());
@@ -41,7 +41,7 @@ void gipOpenNN::setDataset(DataSet& ds) {
 }
 
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, const Tensor<Index, 1>& tensor) {
-	if(neuralnetwork != nullptr) delete neuralnetwork;
+	delete neuralnetwork;
 	neuralnetwork = new NeuralNetwork(projectType, tensor);
 	neuralnetwork->set_inputs_names(dataset->get_input_variables_names());
 	//scaleInputs();
@@ -57,16 +57,29 @@ void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectTyp
 }
 
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, std::vector<int> hiddenNeuronNums) {
-        int perceptronlayernum = hiddenNeuronNums.size();
-        Tensor<Index, 1> architecture(perceptronlayernum + 2);
-        architecture(0) = dataset->get_input_variables_number();
-        architecture(architecture.size() - 1) = dataset->get_target_variables_number();
-        for(int i = 0; i < perceptronlayernum; i++) architecture(i + 1) = hiddenNeuronNums[i];
-        createNeuralNetwork(projectType, architecture);
+	size_t perceptronlayernum = hiddenNeuronNums.size();
+	Tensor<Index, 1> architecture(perceptronlayernum + 2);
+	architecture(0) = dataset->get_input_variables_number();
+	architecture(architecture.size() - 1) = dataset->get_target_variables_number();
+	for(int i = 0; i < perceptronlayernum; i++) {
+		architecture(i + 1) = hiddenNeuronNums[i];
+	}
+	createNeuralNetwork(projectType, architecture);
+}
+
+void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, std::vector<uint32_t> hiddenNeuronNums) {
+	size_t perceptronlayernum = hiddenNeuronNums.size();
+	Tensor<Index, 1> architecture(perceptronlayernum + 2);
+	architecture(0) = dataset->get_input_variables_number();
+	architecture(architecture.size() - 1) = dataset->get_target_variables_number();
+	for(int i = 0; i < perceptronlayernum; i++) {
+		architecture(i + 1) = hiddenNeuronNums[i];
+	}
+	createNeuralNetwork(projectType, architecture);
 }
 
 void gipOpenNN::createTrainingStrategy() {
-	if(trainingstrategy != nullptr) delete trainingstrategy;
+	delete trainingstrategy;
 	trainingstrategy = new TrainingStrategy(neuralnetwork, dataset);
 }
 
@@ -75,7 +88,7 @@ void gipOpenNN::performTraining() {
 }
 
 void gipOpenNN::createTestingAnalysis() {
-	if(testinganalysis != nullptr) delete testinganalysis;
+	delete testinganalysis;
 	testinganalysis = new TestingAnalysis(neuralnetwork, dataset);
 }
 
