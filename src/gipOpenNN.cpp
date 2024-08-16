@@ -57,12 +57,25 @@ void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectTyp
 }
 
 void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, std::vector<int> hiddenNeuronNums) {
-        int perceptronlayernum = hiddenNeuronNums.size();
-        Tensor<Index, 1> architecture(perceptronlayernum + 2);
-        architecture(0) = dataset->get_input_variables_number();
-        architecture(architecture.size() - 1) = dataset->get_target_variables_number();
-        for(int i = 0; i < perceptronlayernum; i++) architecture(i + 1) = hiddenNeuronNums[i];
-        createNeuralNetwork(projectType, architecture);
+	size_t perceptronlayernum = hiddenNeuronNums.size();
+	Tensor<Index, 1> architecture(perceptronlayernum + 2);
+	architecture(0) = dataset->get_input_variables_number();
+	architecture(architecture.size() - 1) = dataset->get_target_variables_number();
+	for(int i = 0; i < perceptronlayernum; i++) {
+		architecture(i + 1) = hiddenNeuronNums[i];
+	}
+	createNeuralNetwork(projectType, architecture);
+}
+
+void gipOpenNN::createNeuralNetwork(const NeuralNetwork::ProjectType& projectType, std::vector<uint32_t> hiddenNeuronNums) {
+	size_t perceptronlayernum = hiddenNeuronNums.size();
+	Tensor<Index, 1> architecture(perceptronlayernum + 2);
+	architecture(0) = dataset->get_input_variables_number();
+	architecture(architecture.size() - 1) = dataset->get_target_variables_number();
+	for(int i = 0; i < perceptronlayernum; i++) {
+		architecture(i + 1) = hiddenNeuronNums[i];
+	}
+	createNeuralNetwork(projectType, architecture);
 }
 
 void gipOpenNN::createTrainingStrategy() {
