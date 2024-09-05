@@ -38,16 +38,16 @@ elseif(APPLE)
 	#Macos libs here
 endif(WIN32)
 
-
 ##### PLUGIN DEPENDENCY LINKING (IF ANY) #####					
 if(WIN32)
 	list(APPEND PLUGIN_LINKLIBS
 				#Lib names
 	)
 elseif(LINUX)
-	list(APPEND PLUGIN_LINKLIBS
-				#Lib names
-	)
+        find_package(OpenMP REQUIRED)
+        if(OPENMP_FOUND)
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        endif()
 elseif(APPLE)
 	find_package(OpenMP REQUIRED)
 	if(OPENMP_FOUND)
@@ -115,11 +115,6 @@ add_library(OpenNN SHARED
 		${OPENNN_SRC}
 )
 
-if(DEFINED WIN32 OR DEFINED LINUX)
-	target_link_libraries(OpenNN PUBLIC
-			omp
-	)
-endif()
 
 # Link headers to the library
 target_include_directories(OpenNN PUBLIC
