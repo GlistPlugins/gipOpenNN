@@ -1,8 +1,19 @@
 # gipOpenNN
 GlistEngine component to implement artificial intelligence and neural network functionalities using OpenNN.
 
+## Install neccesary packages for Linux
+For Debian-Based Distributions;
+> sudo apt-get install libomp-15-dev
+
+For RPM-Based Distributions;
+> sudo dnf install libomp-devel-18.1.6-2.fc40.x86_64
+
 ## Installation
-Fork & clone this project into ~/dev/glist/glistplugins
+1.Make sure that your repo is up-to-date and then go to the plugins folder
+> cd ~/dev/glist/glistplugins
+
+2.Clone repository here
+> git clone https://github.com/[YourGithubUsername]/gipOpenNN
 
 ## Usage
 1. Add gipOpenNN into plugins of your GlistApp/CMakeLists.txt
