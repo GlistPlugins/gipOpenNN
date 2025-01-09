@@ -115,20 +115,18 @@ add_library(OpenNN SHARED
 		${OPENNN_SRC}
 )
 
-# We assume that these variables were set before gipOpenNN plugin was included,
-# it will be a problem if that order is ever changed.
-
-# If these are not set, it will compile with default flags which might be slower because it lacks proper optimization flags.
-list(APPEND GLIST_CXX_FLAGS_DEBUG ${GLIST_CXX_FLAGS_COMMON} ${GLIST_CXX_FLAGS_DEBUG})
-list(APPEND GLIST_CXX_FLAGS_RELEASE ${GLIST_CXX_FLAGS_COMMON} ${GLIST_CXX_FLAGS_RELEASE})
 target_compile_options(
 		OpenNN
 		PRIVATE
-		$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Debug>>:${GLIST_CXX_FLAGS_DEBUG}>
-		$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Release>>:${GLIST_CXX_FLAGS_RELEASE}>
+		-stdlib=libc++ -d2ReducedOptimizeHugeFunctions -Wuninitialized -Wmultichar -ffunction-sections -fdata-sections -fexceptions -frtti -fpermissive -fPIC -DEIGEN_NO_CUDA -DNDEBUG -O2 -std=gnu++14
 )
 
 if(DEFINED WIN32)
+	target_compile_options(
+			OpenNN
+			PRIVATE
+			-march=x86-64
+	)
 	target_link_libraries(OpenNN PUBLIC
 			omp
 	)
