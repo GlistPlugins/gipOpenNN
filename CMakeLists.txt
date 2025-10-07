@@ -11,26 +11,26 @@ set(PREBUILT_DIR ${PLUGIN_DIR}/prebuilts)
 
 ##### PLUGIN SOURCES #####
 list(APPEND PLUGIN_SRCS
-			${PLUGIN_DIR}/src/gipOpenNN.cpp
+		${PLUGIN_DIR}/src/gipOpenNN.cpp
 )
 
 ##### PLUGIN HEADERS #####
 list(APPEND PLUGIN_INCLUDES
-			${PLUGIN_DIR}/src
-			${PLUGIN_DIR}/libraries/eigen/Eigen/src
+		${PLUGIN_DIR}/src
+		${PLUGIN_DIR}/libraries/eigen/Eigen/src
 )
 
 
 ##### PLUGIN DEPENDENCY LOCATIONS (IF ANY) #####
 if(WIN32)
 	list(APPEND PLUGIN_LINKDIRS
-				${PREBUILT_DIR}/lib/win32
-				${PREBUILT_DIR}/bin
+			${PREBUILT_DIR}/lib/win32
+			${PREBUILT_DIR}/bin
 	)
-	
+
 	#set(PLUGIN_LIBDIRS ${PREBUILT_DIR}/lib/win32)
 	list(APPEND PLUGIN_LIBDIRS
-				${PREBUILT_DIR}/lib/win32
+			${PREBUILT_DIR}/lib/win32
 	)
 elseif(LINUX)
 	#Linux libs here
@@ -41,13 +41,13 @@ endif(WIN32)
 ##### PLUGIN DEPENDENCY LINKING (IF ANY) #####					
 if(WIN32)
 	list(APPEND PLUGIN_LINKLIBS
-				#Lib names
+			#Lib names
 	)
 elseif(LINUX)
-        find_package(OpenMP REQUIRED)
-        if(OPENMP_FOUND)
-                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        endif()
+	find_package(OpenMP REQUIRED)
+	if(OPENMP_FOUND)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	endif()
 elseif(APPLE)
 	find_package(OpenMP REQUIRED)
 	if(OPENMP_FOUND)
@@ -120,6 +120,13 @@ target_compile_options(
 		PRIVATE
 		-stdlib=libc++ -d2ReducedOptimizeHugeFunctions -Wuninitialized -Wmultichar -ffunction-sections -fdata-sections -fexceptions -frtti -fpermissive -fPIC -DEIGEN_NO_CUDA -DNDEBUG -O2 -std=gnu++14
 )
+if(DEFINED APPLE)
+	target_link_options(
+			OpenNN
+			PRIVATE
+			-L${BREW_PATH}/llvm/lib -Wl,-rpath,${BREW_PATH}/llvm/lib -L${BREW_PATH}/llvm/lib/c++ -Wl,-rpath,${BREW_PATH}/llvm/lib/c++
+	)
+endif()
 
 if(DEFINED WIN32)
 	target_compile_options(
