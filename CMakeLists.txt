@@ -49,6 +49,31 @@ elseif(LINUX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 	endif()
 elseif(APPLE)
+	find_program(BREW_CMD brew)
+	if(BREW_CMD)
+		execute_process(COMMAND ${BREW_CMD} --prefix libomp
+				OUTPUT_VARIABLE LIBOMP_PREFIX
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+				ERROR_QUIET)
+	endif()
+
+	if(LIBOMP_PREFIX AND EXISTS "${LIBOMP_PREFIX}")
+		set(OpenMP_C "${CMAKE_C_COMPILER}" CACHE STRING "" FORCE)
+		set(OpenMP_C_FLAGS "-Xclang -fopenmp -I${LIBOMP_PREFIX}/include" CACHE STRING "" FORCE)
+		set(OpenMP_C_LIB_NAMES "omp" CACHE STRING "" FORCE)
+
+		set(OpenMP_CXX "${CMAKE_CXX_COMPILER}" CACHE STRING "" FORCE)
+		set(OpenMP_CXX_FLAGS "-Xclang -fopenmp -I${LIBOMP_PREFIX}/include" CACHE STRING "" FORCE)
+		set(OpenMP_CXX_LIB_NAMES "omp" CACHE STRING "" FORCE)
+
+		set(OpenMP_omp_LIBRARY "${LIBOMP_PREFIX}/lib/libomp.dylib" CACHE PATH "" FORCE)
+
+		include_directories("${LIBOMP_PREFIX}/include")
+		link_directories("${LIBOMP_PREFIX}/lib")
+	else()
+		message(WARNING "libomp not found. Install with: brew install libomp")
+	endif()
+
 	find_package(OpenMP REQUIRED)
 	if(OPENMP_FOUND)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -118,15 +143,8 @@ add_library(OpenNN SHARED
 target_compile_options(
 		OpenNN
 		PRIVATE
-		-stdlib=libc++ -d2ReducedOptimizeHugeFunctions -Wuninitialized -Wmultichar -ffunction-sections -fdata-sections -fexceptions -frtti -fpermissive -fPIC -DEIGEN_NO_CUDA -DNDEBUG -O2 -std=gnu++14
+		-stdlib=libc++ -Wuninitialized -Wmultichar -ffunction-sections -fdata-sections -fexceptions -frtti -fpermissive -fPIC -DEIGEN_NO_CUDA -DNDEBUG -O2 -std=gnu++14
 )
-if(DEFINED APPLE)
-	target_link_options(
-			OpenNN
-			PRIVATE
-			-L${BREW_PATH}/llvm/lib -Wl,-rpath,${BREW_PATH}/llvm/lib -L${BREW_PATH}/llvm/lib/c++ -Wl,-rpath,${BREW_PATH}/llvm/lib/c++
-	)
-endif()
 
 if(DEFINED WIN32)
 	target_compile_options(
@@ -134,9 +152,12 @@ if(DEFINED WIN32)
 			PRIVATE
 			-march=x86-64
 	)
-	target_link_libraries(OpenNN PUBLIC
-			omp
-	)
+endif()
+
+if(DEFINED WIN32)
+	target_link_libraries(OpenNN PUBLIC omp)
+elseif(DEFINED APPLE)
+	target_link_libraries(OpenNN PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 # Link headers to the library
