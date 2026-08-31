@@ -143,7 +143,7 @@ add_library(OpenNN SHARED
 target_compile_options(
 		OpenNN
 		PRIVATE
-		-stdlib=libc++ -Wuninitialized -Wmultichar -ffunction-sections -fdata-sections -fexceptions -frtti -fpermissive -fPIC -DEIGEN_NO_CUDA -DNDEBUG -O2 -std=gnu++14
+		-Wuninitialized -Wmultichar -ffunction-sections -fdata-sections -fexceptions -frtti -fpermissive -fPIC -DEIGEN_NO_CUDA -DNDEBUG -O2 -std=gnu++14
 )
 
 if(DEFINED WIN32)
